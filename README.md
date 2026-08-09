@@ -50,6 +50,8 @@ After editing `.env`, run `npm run seed` again to apply account changes.
 | `npm run dev` | API with hot reload (needs a real `MONGODB_URI`) |
 | `npm run dev:memory` | API against a throwaway in-memory DB |
 | `npm run seed` | Create/update the two accounts from `.env` |
+| `npm run seed:demo` | Fill every section with placeholder content |
+| `npm run seed:demo -- --clear` | Wipe **all** content (accounts are kept) |
 | `npm run smoke` | End-to-end API test on a temporary DB |
 | `npm run build` / `start` | Production |
 
@@ -59,6 +61,19 @@ After editing `.env`, run `npm run seed` again to apply account changes.
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck + production build |
 | `npm run typecheck` | Types only |
+
+## Demo content
+
+Every section is currently filled with **placeholder text** so the site has
+something to render while it is being built. None of it is real. When you are
+ready to put your own content in:
+
+```bash
+cd server && npm run seed:demo -- --clear
+```
+
+That empties every content collection (and the media library) but leaves both
+accounts alone.
 
 ## Structure
 
