@@ -52,15 +52,6 @@ export function ComingSoon({
   );
 }
 
-export const UniversePage = () => (
-  <ComingSoon
-    icon="universe"
-    title="Our Universe"
-    blurb="A sky full of stars, and some of them are ours. Click one and it opens."
-    pose="float"
-  />
-);
-
 export const OpenWhenPage = () => (
   <ComingSoon
     icon="envelope"

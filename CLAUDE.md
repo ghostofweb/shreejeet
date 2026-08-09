@@ -25,7 +25,7 @@ If a screen doesn't move toward that feeling, it's wrong — even if it works.
 | Routing | React Router v6 (data routers) | |
 | Styling | **Tailwind CSS v3** + CSS custom properties for theming | Tailwind for layout/spacing; CSS vars for scene palettes |
 | Animation | **Framer Motion** only | `useScroll` + `useSpring` covers the timeline scrub; GSAP was dropped as an unnecessary dependency |
-| 3D / particles | **@react-three/fiber + drei** for Our Universe star field | Instanced points, not DOM nodes |
+| Star field | **Canvas 2D** for Our Universe | R3F/three.js was dropped: a few hundred glow sprites are well inside canvas2d's budget, it adds no bundle weight, and it can't lose a WebGL context on a phone |
 | State | **TanStack Query** for server state, Zustand for tiny UI state (identity, audio, nav) | No Redux |
 | Forms | react-hook-form + zod | Zod schemas shared with backend |
 | Backend | **Node 20+ / Express 4 / TypeScript** | REST, `/api/v1` |
