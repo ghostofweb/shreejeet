@@ -14,11 +14,11 @@ import {
   storyConfig,
 } from '@/pages/admin/configs';
 import Story from '@/pages/Story';
+import Reasons from '@/pages/Reasons';
 import {
   ConfessionsPage,
   DatesPage,
   OpenWhenPage,
-  ReasonsPage,
   UniversePage,
 } from '@/pages/ComingSoon';
 import { useAuth } from '@/store/auth';
@@ -47,7 +47,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Navigate to="/story" replace />} />
         <Route path="/story" element={<Story />} />
-        <Route path="/reasons" element={<ReasonsPage />} />
+        <Route path="/reasons" element={<Reasons />} />
         <Route path="/universe" element={<UniversePage />} />
         <Route path="/open-when" element={<OpenWhenPage />} />
         <Route path="/confessions" element={<ConfessionsPage />} />

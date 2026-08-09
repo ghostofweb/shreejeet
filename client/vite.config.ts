@@ -10,7 +10,9 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Lets local uploads render without CORS fuss in dev.
+      // Dev runs everything through one origin: no CORS, no cross-site cookie
+      // rules, and the refresh cookie behaves exactly as it will in production.
+      '/api': { target: 'http://localhost:4000', changeOrigin: true },
       '/uploads': 'http://localhost:4000',
     },
   },

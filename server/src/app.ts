@@ -7,7 +7,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFound } from './middleware/error.js';
 import { authRouter } from './routes/auth.js';
-import { adminRouter, settingsRouter } from './routes/admin.js';
+import { adminRouter, peopleRouter, settingsRouter } from './routes/admin.js';
 import { mediaRouter, UPLOAD_DIR } from './routes/media.js';
 import {
   confessionsRouter,
@@ -61,6 +61,7 @@ export function createApp() {
   api.use('/dates', datesRouter);
   api.use('/media', mediaRouter);
   api.use('/admin', adminRouter);
+  api.use('/people', peopleRouter);
   api.use('/settings', settingsRouter);
 
   app.use('/api/v1', api);

@@ -4,7 +4,8 @@ import { mediaUrl } from '@/lib/api';
 import { DUR, EASE } from '@/lib/motion';
 import { sceneFor } from '@/lib/scenes';
 import type { StoryEvent } from '@/lib/types';
-import { attribution, cn, formatDate } from '@/lib/utils';
+import { usePeople } from '@/lib/people';
+import { cn, formatDate } from '@/lib/utils';
 import { Icon } from '@/components/Icon';
 import { PhotoGallery } from './PhotoGallery';
 
@@ -24,6 +25,7 @@ export function TimelineEvent({
 }) {
   const scene = sceneFor(event.sceneType);
   const photos = event.photos ?? [];
+  const { attributionFor } = usePeople();
 
   return (
     <div
@@ -110,7 +112,7 @@ export function TimelineEvent({
             side === 'left' && 'sm:text-right'
           )}
         >
-          {attribution(event.createdBy)}
+          {attributionFor(event.createdBy)}
         </p>
       </motion.article>
     </div>

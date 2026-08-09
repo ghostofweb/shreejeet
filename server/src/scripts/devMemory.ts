@@ -20,19 +20,28 @@ const { env } = await import('../config/env.js');
 const mem = await MongoMemoryServer.create();
 await mongoose.connect(mem.getUri('our-little-world-dev'));
 
-const EMAIL = 'dev@example.com';
 const PASSWORD = 'devpassword';
 
+// Both accounts, so identity-aware sections (Reasons, attribution) work offline.
+const meName = env.seed.me.name || 'Jeet';
+const herName = env.seed.her.name || 'Shree';
+const hash = await bcrypt.hash(PASSWORD, 10);
+
+await User.create({ email: 'me@example.com', passwordHash: hash, displayName: meName, role: 'me' });
 await User.create({
-  email: EMAIL,
-  passwordHash: await bcrypt.hash(PASSWORD, 10),
-  displayName: 'Dev',
-  role: 'me',
+  email: 'her@example.com',
+  passwordHash: hash,
+  displayName: herName,
+  role: 'her',
 });
 
+const { seedDemoContent } = await import('./seedDemo.js');
+await seedDemoContent(true);
+
 createApp().listen(env.port, () => {
-  console.log(`\n🐈 dev API (in-memory) on http://localhost:${env.port}/api/v1`);
-  console.log(`   sign in with  ${EMAIL}  /  ${PASSWORD}`);
+  console.log(`\n🐈 dev API (in-memory, seeded with demo content) on http://localhost:${env.port}/api/v1`);
+  console.log(`   ${meName}:  me@example.com  /  ${PASSWORD}`);
+  console.log(`   ${herName}: her@example.com /  ${PASSWORD}`);
   console.log('   ⚠️  data is wiped on every restart\n');
 });
 

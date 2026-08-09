@@ -10,6 +10,7 @@ import {
   UniverseStar,
 } from '../models/content.js';
 import { Media } from '../models/Media.js';
+import { User } from '../models/User.js';
 import { asyncHandler } from '../lib/errors.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -32,6 +33,27 @@ adminRouter.get(
       Media.countDocuments(ALIVE),
     ]);
     res.json({ memories, stars, reasons, letters, confessions, dates, media });
+  })
+);
+
+/**
+ * Both people's display names, so the UI can say "Shree" instead of "her".
+ * Names only — never emails or anything else from the user document.
+ */
+export const peopleRouter = Router();
+peopleRouter.use(requireAuth);
+
+peopleRouter.get(
+  '/',
+  asyncHandler(async (_req, res) => {
+    const users = await User.find().select('role displayName avatarUrl').lean();
+    res.json({
+      items: users.map((u) => ({
+        role: u.role,
+        displayName: u.displayName,
+        avatarUrl: u.avatarUrl ?? null,
+      })),
+    });
   })
 );
 

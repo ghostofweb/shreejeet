@@ -66,9 +66,21 @@ reasonsRouter.get(
       return doc ?? null;
     };
 
-    // Try to avoid a recent repeat; if that empties the pool, fall back to any.
-    let doc = excluded.length
-      ? await pick({ ...base, _id: { $nin: excluded.map((id) => new Types.ObjectId(id)) } })
+    /*
+     * The client sends everything it has seen recently, but only the server
+     * knows how many reasons exist. Honouring the whole list would exclude the
+     * entire pool once it is small, and every draw would fall through to the
+     * same fallback. So keep at most half the pool excluded — enough to stop
+     * immediate repeats, never enough to starve the choice.
+     */
+    const poolSize = await Reason.countDocuments(base);
+    if (!poolSize) throw ApiError.notFound('No reasons written yet');
+
+    const keep = Math.min(excluded.length, Math.max(0, Math.floor(poolSize / 2)));
+    const effective = excluded.slice(0, keep);
+
+    let doc = effective.length
+      ? await pick({ ...base, _id: { $nin: effective.map((id) => new Types.ObjectId(id)) } })
       : null;
     doc ??= await pick(base);
 

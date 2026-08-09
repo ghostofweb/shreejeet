@@ -8,6 +8,7 @@
  *   npm run seed:demo          add the demo content
  *   npm run seed:demo -- --clear   wipe ALL content (keeps the two accounts)
  */
+import { pathToFileURL } from 'node:url';
 import type { Model } from 'mongoose';
 import { connectDb, disconnectDb } from '../config/db.js';
 import { env } from '../config/env.js';
@@ -293,6 +294,11 @@ async function seed() {
     return;
   }
 
+  await seedDemoContent();
+}
+
+/** Exported so `dev:memory` can stand up a fully populated throwaway database. */
+export async function seedDemoContent(quiet = false) {
   await StoryEvent.insertMany(story.map((e, i) => ({ ...e, order: i })));
   await Reason.insertMany(reasons.map((r) => ({ ...r, about: r.createdBy === 'her' ? 'me' : 'her' })));
   await UniverseStar.insertMany(stars);
@@ -305,6 +311,7 @@ async function seed() {
     { upsert: true }
   );
 
+  if (quiet) return;
   console.log('\n🌱 Demo content added:');
   console.log(`   · ${story.length} memories`);
   console.log(`   · ${reasons.length} reasons`);
@@ -325,8 +332,15 @@ async function main() {
   await disconnectDb();
 }
 
-main().catch(async (err) => {
-  console.error(err);
-  await disconnectDb();
-  process.exit(1);
-});
+// Only run when invoked directly — dev:memory imports seedDemoContent from here
+// and must not trigger a connection to the real database.
+const invokedDirectly =
+  process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+
+if (invokedDirectly) {
+  main().catch(async (err) => {
+    console.error(err);
+    await disconnectDb();
+    process.exit(1);
+  });
+}

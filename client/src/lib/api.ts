@@ -80,11 +80,16 @@ export function errorMessage(err: unknown, fallback = 'Something went wrong'): s
   return fallback;
 }
 
-/** Local uploads come back as /uploads/x — make them absolute in dev. */
+/**
+ * Cloudinary URLs are absolute already. Locally-stored uploads come back as
+ * `/uploads/x`; when API_URL is relative (dev, proxied) that path is already
+ * correct, otherwise prefix the API's origin.
+ */
 export function mediaUrl(url?: string | null): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${API_URL.replace('/api/v1', '')}${url}`;
+  const origin = API_URL.replace(/\/api\/v1\/?$/, '');
+  return `${origin}${url}`;
 }
 
 export { refreshOnce };

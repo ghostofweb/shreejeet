@@ -52,15 +52,6 @@ export function ComingSoon({
   );
 }
 
-export const ReasonsPage = () => (
-  <ComingSoon
-    icon="tulip"
-    title="Reasons"
-    blurb="One reason at a time, pulled at random from everything either of us has ever written down."
-    pose="hold-heart"
-  />
-);
-
 export const UniversePage = () => (
   <ComingSoon
     icon="universe"
