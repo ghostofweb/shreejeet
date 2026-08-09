@@ -55,6 +55,10 @@ export interface MediaAsset extends MediaRef {
   id: string;
   provider: 'cloudinary' | 'local';
   bytes?: number;
+  /** Seconds, video only. */
+  duration?: number;
+  format?: string;
+  originalName?: string;
   createdAt: string;
 }
 

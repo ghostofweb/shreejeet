@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { api, errorMessage, mediaUrl } from '@/lib/api';
-import type { ListResponse, MediaRef } from '@/lib/types';
+import type { ListResponse, MediaRef, SceneType } from '@/lib/types';
 import { DUR, EASE } from '@/lib/motion';
 import { cn, formatDate, toDateInput } from '@/lib/utils';
 import { Icon, type IconName } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { Input, Select, Textarea, Toggle } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
 import { Empty, ErrorState, Skeleton } from '@/components/ui/States';
 import { MediaPicker, SingleMediaPicker } from './MediaPicker';
+import { ScenePicker } from './ScenePicker';
 
 /* ── Field definitions ────────────────────────────────────────── */
 
@@ -24,7 +25,8 @@ export type FieldDef =
   | { name: string; label: string; type: 'select'; options: { value: string; label: string }[] }
   | { name: string; label: string; type: 'media'; accept?: string }
   | { name: string; label: string; type: 'mediaMulti'; max?: number; accept?: string }
-  | { name: string; label: string; type: 'color' };
+  | { name: string; label: string; type: 'color' }
+  | { name: string; label: string; type: 'scene' };
 
 export interface ResourceConfig<T> {
   /** API path segment, e.g. "story". Also the react-query key. */
@@ -381,6 +383,13 @@ function FieldRenderer({
             className="h-10 w-20 cursor-pointer rounded-lg border border-white/10 bg-transparent"
           />
         </label>
+      );
+    case 'scene':
+      return (
+        <ScenePicker
+          value={(value as SceneType) ?? 'sunrise'}
+          onChange={(v) => onChange(field.name, v)}
+        />
       );
     case 'media':
       return (

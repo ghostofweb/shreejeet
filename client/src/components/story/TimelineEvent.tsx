@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { mediaUrl } from '@/lib/api';
 import { DUR, EASE } from '@/lib/motion';
@@ -14,30 +14,20 @@ import { PhotoGallery } from './PhotoGallery';
  */
 export function TimelineEvent({
   event,
-  index,
   side,
-  onActive,
+  registerRef,
 }: {
   event: StoryEvent;
-  index: number;
   side: 'left' | 'right';
-  onActive: () => void;
+  /** Lets the page scroll straight to this memory, and drives scene switching. */
+  registerRef?: (el: HTMLDivElement | null) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  // Fires when the event reaches the middle band of the screen — this is what
-  // swaps the background scene.
-  const inView = useInView(ref, { margin: '-45% 0px -45% 0px' });
-
-  useEffect(() => {
-    if (inView) onActive();
-  }, [inView, onActive]);
-
   const scene = sceneFor(event.sceneType);
   const photos = event.photos ?? [];
 
   return (
     <div
-      ref={ref}
+      ref={registerRef}
       className={cn(
         'relative flex w-full',
         // mobile: everything sits to the right of the spine
@@ -48,7 +38,6 @@ export function TimelineEvent({
           ? 'sm:justify-start sm:pr-[calc(50%+3.75rem)]'
           : 'sm:justify-end sm:pl-[calc(50%+3.75rem)]'
       )}
-      onMouseEnter={onActive}
     >
       {/* the node on the spine */}
       <SpineNode accent={scene.accent} />
@@ -113,15 +102,7 @@ export function TimelineEvent({
           </div>
         )}
 
-        {event.video?.url && (
-          <video
-            src={mediaUrl(event.video.url)}
-            controls
-            playsInline
-            preload="metadata"
-            className="mt-6 w-full rounded-xl border border-white/15 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.8)]"
-          />
-        )}
+        {event.video?.url && <StoryVideo url={event.video.url} accent={scene.accent} />}
 
         <p
           className={cn(
@@ -158,6 +139,52 @@ function SpineNode({ accent }: { accent: string }) {
       <span style={{ color: accent }}>
         <Icon name="benzene" size={22} strokeWidth={1.7} />
       </span>
+    </motion.div>
+  );
+}
+
+/**
+ * Video stays silent and still until she asks for it: a poster frame with a
+ * play button, then real controls once it starts. Never autoplays with sound.
+ */
+function StoryVideo({ url, accent }: { url: string; accent: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 26 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-70px' }}
+      transition={{ duration: DUR.slow, ease: EASE.soft }}
+      className="relative mt-6 overflow-hidden rounded-2xl border border-white/15 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.85)]"
+    >
+      <video
+        ref={videoRef}
+        src={mediaUrl(url)}
+        playsInline
+        preload="metadata"
+        controls={playing}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        className="block w-full bg-black"
+      />
+
+      {!playing && (
+        <button
+          type="button"
+          onClick={() => videoRef.current?.play()}
+          aria-label="Play video"
+          className="group absolute inset-0 flex items-center justify-center bg-black/25 transition-colors hover:bg-black/10"
+        >
+          <span
+            className="flex h-16 w-16 items-center justify-center rounded-full backdrop-blur-md transition-transform duration-300 group-hover:scale-110"
+            style={{ background: `${accent}e6`, color: '#120d16' }}
+          >
+            <Icon name="play" size={24} filled />
+          </span>
+        </button>
+      )}
     </motion.div>
   );
 }

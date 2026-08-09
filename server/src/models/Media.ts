@@ -10,6 +10,11 @@ const mediaSchema = new Schema(
     width: Number,
     height: Number,
     bytes: Number,
+    /** Seconds — video only, used to label thumbnails in the picker. */
+    duration: Number,
+    /** e.g. "mp4", "png" — shown as a badge so the two are never confused. */
+    format: String,
+    originalName: String,
     alt: String,
     uploadedBy: { type: String, enum: AUTHORS, default: 'me' },
     isDeleted: { type: Boolean, default: false, index: true },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
@@ -12,12 +12,24 @@ import { Icon } from '@/components/Icon';
 import { Tulip } from '@/components/motifs/Tulip';
 import { HelixSpine } from '@/components/motifs/HelixSpine';
 import { SceneBackground } from '@/components/story/SceneBackground';
+import { StoryNav } from '@/components/story/StoryNav';
 import { TimelineEvent } from '@/components/story/TimelineEvent';
 import { Empty, ErrorState, Loading } from '@/components/ui/States';
 
 export default function Story() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const eventRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [scene, setScene] = useState<SceneType>('sunrise');
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  /** Centre a memory in the viewport. Native smooth scrolling keeps it buttery. */
+  const jumpTo = useCallback((index: number) => {
+    const el = eventRefs.current[index];
+    if (!el) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const top = window.scrollY + el.getBoundingClientRect().top - window.innerHeight * 0.28;
+    window.scrollTo({ top, behavior: reduced ? 'auto' : 'smooth' });
+  }, []);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['story'],
@@ -40,7 +52,46 @@ export default function Story() {
 
   const activeScene = sceneFor(scene);
 
-  const setSceneFor = useCallback((s: SceneType) => setScene(s), []);
+  /**
+   * One scroll listener decides which memory is "current" — the last one whose
+   * top has passed a reading line a third down the screen. A per-event
+   * IntersectionObserver band was unreliable: land in the gap between two
+   * memories and nothing was active, so the arrows went stale.
+   */
+  useEffect(() => {
+    if (!events.length) return;
+    let frame = 0;
+
+    const measure = () => {
+      frame = 0;
+      const line = window.innerHeight * 0.34;
+      let next = 0;
+      for (let i = 0; i < eventRefs.current.length; i++) {
+        const el = eventRefs.current[i];
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) next = i;
+        else break;
+      }
+      setActiveIndex((prev) => (prev === next ? prev : next));
+      setScene((prev) => {
+        const s = events[next]?.sceneType ?? 'sunrise';
+        return prev === s ? prev : s;
+      });
+    };
+
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [events]);
 
   if (isLoading) return <Loading message="finding where it all started…" />;
   if (isError) {
@@ -97,9 +148,10 @@ export default function Story() {
               <TimelineEvent
                 key={event.id}
                 event={event}
-                index={i}
                 side={i % 2 === 0 ? 'left' : 'right'}
-                onActive={() => setSceneFor(event.sceneType)}
+                registerRef={(el) => {
+                  eventRefs.current[i] = el;
+                }}
               />
             ))}
           </div>
@@ -110,6 +162,10 @@ export default function Story() {
           <Outro last={events[events.length - 1]} accent={activeScene.accent} />
         )}
       </div>
+
+      {events.length > 1 && (
+        <StoryNav events={events} activeIndex={activeIndex} onJump={jumpTo} />
+      )}
     </div>
   );
 }

@@ -62,8 +62,19 @@ api.interceptors.response.use(
 /** Turns an axios failure into something we can show a human. */
 export function errorMessage(err: unknown, fallback = 'Something went wrong'): string {
   if (axios.isAxiosError(err)) {
-    const data = err.response?.data as { error?: string } | undefined;
-    return data?.error ?? err.message ?? fallback;
+    // No response at all means the API never answered — almost always the
+    // server being down, not anything wrong with what was sent.
+    if (!err.response) {
+      return 'Could not reach the server. Is the API running on port 4000?';
+    }
+    const data = err.response.data as { error?: string; details?: unknown } | undefined;
+    const detail = Array.isArray(data?.details)
+      ? (data.details as { path?: string; message?: string }[])
+          .map((d) => [d.path, d.message].filter(Boolean).join(': '))
+          .join(' · ')
+      : '';
+    const base = data?.error ?? err.message ?? fallback;
+    return detail ? `${base} — ${detail}` : base;
   }
   if (err instanceof Error) return err.message;
   return fallback;

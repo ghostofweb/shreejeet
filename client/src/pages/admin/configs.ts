@@ -1,4 +1,5 @@
 import type { ResourceConfig } from '@/components/admin/resource';
+import { SCENES } from '@/lib/scenes';
 import { formatDate } from '@/lib/utils';
 import type {
   Confession,
@@ -23,25 +24,9 @@ export const storyConfig: ResourceConfig<StoryEvent> = {
     { name: 'title', label: 'Title', type: 'text', required: true, placeholder: 'The day we…' },
     { name: 'description', label: 'What happened', type: 'textarea', rows: 5 },
     { name: 'location', label: 'Where', type: 'text', placeholder: 'optional' },
-    {
-      name: 'sceneType',
-      label: 'Scene',
-      type: 'select',
-      options: [
-        opt('sunrise', 'Sunrise — warm beginnings'),
-        opt('blossom', 'Blossom — soft and sweet'),
-        opt('sky', 'Sky — travel, distance'),
-        opt('night', 'Night — late hours'),
-        opt('rain', 'Rain — the heavy ones'),
-        opt('snow', 'Snow — quiet and still'),
-        opt('city', 'City — out together'),
-        opt('beach', 'Beach — sun and salt'),
-        opt('glow', 'Glow — a milestone'),
-        opt('cozy', 'Cozy — home'),
-      ],
-    },
+    { name: 'sceneType', label: 'Scene', type: 'scene' },
     { name: 'photos', label: 'Photos', type: 'mediaMulti', max: 20, accept: 'image/*' },
-    { name: 'video', label: 'Video', type: 'media', accept: 'video/*' },
+    { name: 'video', label: 'Video (one)', type: 'media', accept: 'video/*' },
     {
       name: 'specialMessage',
       label: 'A line just for her',
@@ -64,7 +49,16 @@ export const storyConfig: ResourceConfig<StoryEvent> = {
     createdBy: 'me',
   },
   primary: (e) => e.title,
-  secondary: (e) => [formatDate(e.date), e.location].filter(Boolean).join(' · '),
+  secondary: (e) =>
+    [
+      formatDate(e.date),
+      SCENES[e.sceneType]?.label,
+      e.location,
+      e.photos?.length ? `${e.photos.length} photo${e.photos.length > 1 ? 's' : ''}` : null,
+      e.video?.url ? 'video' : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
   thumbnail: (e) => e.photos?.[0] ?? e.video,
 };
 

@@ -30,7 +30,12 @@ export function createApp() {
   );
 
   const origins = env.clientOrigin.split(',').map((o) => o.trim());
-  app.use(cors({ origin: origins, credentials: true }));
+  app.use(
+    cors({
+      origin: env.isProd ? origins : (origin, cb) => cb(null, true),
+      credentials: true,
+    })
+  );
 
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
