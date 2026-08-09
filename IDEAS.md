@@ -1,27 +1,38 @@
 # Ideas parking lot
 
-Things that came up mid-build but are **out of scope** for now. Scope is locked
-to the six sections + admin (see CLAUDE.md §11). Nothing moves from here into the
-app without a deliberate decision.
+Scope is locked to the six sections + admin (CLAUDE.md §11). Nothing moves from
+here into the app without a deliberate decision.
 
-## Deferred from Phase 1–2
+## Known gaps — worth doing next
 
-- **Self-hosted fonts.** Fraunces / Instrument Sans / Caveat currently load from
-  Google Fonts. Phase 9 should download the woff2 files into `client/public/fonts`
-  so the site makes no third-party request at runtime.
-- **Mobile visual verification.** The responsive classes and mobile nav are built,
-  but the layouts have not been eyeballed on a real narrow viewport yet. Do this
-  properly during each remaining phase, not only in Phase 9.
-- **Login field-level errors.** A zod failure on login currently shows the generic
-  "Some fields need fixing". Worth surfacing which field.
-- **Media alt text.** The upload flow stores `alt` but the picker doesn't ask for it.
-  Needed for the accessibility pass.
-- **Blurhash placeholders.** `Media.blurhash` is in the plan but not yet generated
-  on upload.
+- **Self-hosted fonts.** Fraunces / Instrument Sans / Caveat still load from
+  Google Fonts, so the site makes one third-party request on first paint.
+  Download the woff2 files into `client/public/fonts` and swap the `<link>` for
+  `@font-face` rules with `font-display: swap`.
+- **Media alt text.** Uploads store an `alt` field but nothing asks for it. The
+  picker should prompt, and the timeline/star/letter galleries should use it.
+- **Blurhash / dominant-colour placeholders.** `Media` has width and height but
+  no placeholder, so photos pop in. Generate one on upload.
+- **Lighthouse pass.** Never run — no headless Chrome in this environment.
+- **Refresh-token cap.** Five per account; signing in on a sixth device silently
+  signs out the oldest. Fine for two people, worth raising if it bites.
+
+## Verified by hand rather than by me
+
+These work as far as I could observe, but the automation harness could not
+drive them — screenshot latency and background-tab animation throttling get in
+the way. Worth a minute each:
+
+- Clicking a star directly on the Universe canvas (hover hit-testing is proven;
+  the click path was only exercised through the star index).
+- The four beats of the envelope opening in Open When — the state machine was
+  observed stepping through in order, but the frames were never captured.
+- The hold-to-reveal ring in Confessions. The gating is proven: a plain click
+  correctly refuses to open a hold-note.
 
 ## Later, maybe
 
-- Ambient audio toggle (default off)
-- PWA manifest / installable
+- Ambient audio toggle, default off
 - Export the whole world as a printable book
-- Per-person read receipts on letters ("she opened this on…")
+- Per-person read receipts shown in the UI ("she opened this on…")
+- Search across everything

@@ -1,6 +1,18 @@
-# 🐈 Our Little World
+# Our Little World
 
-A private, two-person relationship website. See [CLAUDE.md](./CLAUDE.md) for the full plan.
+A private, two-person relationship website. See [CLAUDE.md](./CLAUDE.md) for the
+design rules and [IDEAS.md](./IDEAS.md) for what is deliberately left undone.
+
+All six sections are built:
+
+| Section | What it is |
+|---|---|
+| **Our Story** | A scroll-driven timeline on a DNA helix. Ten scene worlds cross-fade as you pass each memory; the cat walks down the spine. Arrow keys, prev/next and a dot rail move between memories. |
+| **Reasons** | Pick who you are, then pull one reason at a time from what the other person wrote. A tulip garden blooms with each. Either of you can add one inline. |
+| **Our Universe** | A canvas night sky. Your stars burn by type, constellations join as chemical bonds, secret stars reveal when you get close. Every star is also in a keyboard-reachable index. |
+| **Open When…** | Envelopes on a desk. Opening one cracks the wax, folds the flap back, slides the page out and hands it to you. Bodies never leave the server until opened. |
+| **Confessions** | A dark room with a light that follows you. The words are on the note but out of focus until you tap — or hold — to read. |
+| **Important Dates** | Days-together counter, a live countdown to whatever is next, and every date on a slow orbit or in a list. |
 
 ## Running it
 

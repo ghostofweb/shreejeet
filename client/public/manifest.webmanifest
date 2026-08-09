@@ -1,0 +1,19 @@
+{
+  "name": "Our Little World",
+  "short_name": "Our World",
+  "description": "A private place for two people.",
+  "start_url": "/story",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#14101f",
+  "theme_color": "#14101f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
