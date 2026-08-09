@@ -52,15 +52,6 @@ export function ComingSoon({
   );
 }
 
-export const OpenWhenPage = () => (
-  <ComingSoon
-    icon="envelope"
-    title="Open When…"
-    blurb="Letters waiting for the moment you need them. Sealed until then."
-    pose="hold-envelope"
-  />
-);
-
 export const ConfessionsPage = () => (
   <ComingSoon
     icon="confessions"
