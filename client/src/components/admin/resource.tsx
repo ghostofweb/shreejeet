@@ -6,6 +6,7 @@ import { api, errorMessage, mediaUrl } from '@/lib/api';
 import type { ListResponse, MediaRef } from '@/lib/types';
 import { DUR, EASE } from '@/lib/motion';
 import { cn, formatDate, toDateInput } from '@/lib/utils';
+import { Icon, type IconName } from '@/components/Icon';
 import { Button } from '@/components/ui/Button';
 import { Input, Select, Textarea, Toggle } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Modal';
@@ -29,7 +30,7 @@ export interface ResourceConfig<T> {
   /** API path segment, e.g. "story". Also the react-query key. */
   path: string;
   title: string;
-  icon: string;
+  icon: IconName;
   singular: string;
   /** Blurb under the heading — sets the tone for what to write here. */
   blurb?: string;
@@ -93,14 +94,14 @@ export function ResourcePage<T extends { id: string; createdBy: string }>({
       <header className="mb-8">
         <p className="text-sm opacity-40">
           <Link to="/admin" className="hover:opacity-100">
-            🐈 Admin
+            Admin
           </Link>{' '}
           / {config.title}
         </p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="font-display text-4xl">
-              <span className="mr-2">{config.icon}</span>
+            <h1 className="flex items-center gap-3 font-display text-4xl">
+              <Icon name={config.icon} size={30} className="opacity-70" />
               {config.title}
             </h1>
             {config.blurb && <p className="mt-1.5 max-w-lg text-sm opacity-45">{config.blurb}</p>}
@@ -199,8 +200,8 @@ function Thumb<T extends { id: string }>({
   const media = config.thumbnail?.(item);
   if (!media) {
     return (
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/5 text-xl opacity-40">
-        {config.icon}
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/5 opacity-40">
+        <Icon name={config.icon} size={22} />
       </div>
     );
   }

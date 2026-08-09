@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Icon, type IconName } from '@/components/Icon';
 import { DUR, EASE } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/store/auth';
 
 export const SECTIONS = [
-  { to: '/story', label: 'Our Story', icon: '🏠', world: 'story' },
-  { to: '/reasons', label: 'Reasons', icon: '🌹', world: 'reasons' },
-  { to: '/universe', label: 'Our Universe', icon: '🌌', world: 'universe' },
-  { to: '/open-when', label: 'Open When…', icon: '💌', world: 'letters' },
-  { to: '/confessions', label: 'Confessions', icon: '🫣', world: 'confessions' },
-  { to: '/dates', label: 'Important Dates', icon: '🗓️', world: 'dates' },
-] as const;
+  { to: '/story', label: 'Our Story', icon: 'story', world: 'story' },
+  { to: '/reasons', label: 'Reasons', icon: 'reasons', world: 'reasons' },
+  { to: '/universe', label: 'Our Universe', icon: 'universe', world: 'universe' },
+  { to: '/open-when', label: 'Open When…', icon: 'letters', world: 'letters' },
+  { to: '/confessions', label: 'Confessions', icon: 'confessions', world: 'confessions' },
+  { to: '/dates', label: 'Important Dates', icon: 'dates', world: 'dates' },
+] as const satisfies readonly { to: string; label: string; icon: IconName; world: string }[];
 
 export function Nav() {
   const { pathname } = useLocation();
@@ -66,11 +67,11 @@ export function Nav() {
                   )}
                   <span
                     className={cn(
-                      'relative whitespace-nowrap transition-opacity duration-200',
+                      'relative flex items-center gap-1.5 whitespace-nowrap transition-opacity duration-200',
                       isActive ? 'opacity-100' : 'opacity-55 hover:opacity-90'
                     )}
                   >
-                    <span className="mr-1.5 text-xs">{s.icon}</span>
+                    <Icon name={s.icon} size={15} />
                     {s.label}
                   </span>
                 </>
@@ -84,12 +85,12 @@ export function Nav() {
               title="Admin"
               className={({ isActive }) =>
                 cn(
-                  'ml-1 rounded-full px-3 py-1.5 text-sm transition-opacity',
+                  'ml-1 flex items-center rounded-full px-3 py-2 transition-opacity',
                   isActive ? 'opacity-100' : 'opacity-35 hover:opacity-75'
                 )
               }
             >
-              🔐
+              <Icon name="admin" size={15} title="Admin" />
             </NavLink>
           )}
         </div>
@@ -142,12 +143,12 @@ export function Nav() {
                   to={s.to}
                   className={({ isActive }) =>
                     cn(
-                      'block py-3 font-display text-3xl transition-opacity',
+                      'flex items-center gap-4 py-3 font-display text-3xl transition-opacity',
                       isActive ? 'opacity-100' : 'opacity-45'
                     )
                   }
                 >
-                  <span className="mr-3 text-xl">{s.icon}</span>
+                  <Icon name={s.icon} size={26} />
                   {s.label}
                 </NavLink>
               </motion.div>
@@ -159,8 +160,9 @@ export function Nav() {
                 transition={{ delay: 0.4 }}
                 className="mt-6"
               >
-                <NavLink to="/admin" className="text-sm opacity-40">
-                  🔐 Admin
+                <NavLink to="/admin" className="flex items-center gap-2 text-sm opacity-40">
+                  <Icon name="admin" size={14} />
+                  Admin
                 </NavLink>
               </motion.div>
             )}

@@ -24,7 +24,7 @@ If a screen doesn't move toward that feeling, it's wrong — even if it works.
 | Frontend | **Vite + React 18 + TypeScript** | SPA, no Next.js |
 | Routing | React Router v6 (data routers) | |
 | Styling | **Tailwind CSS v3** + CSS custom properties for theming | Tailwind for layout/spacing; CSS vars for scene palettes |
-| Animation | **Framer Motion** (primary) + **GSAP ScrollTrigger** (timeline scrubbing only) | Don't mix them on the same element |
+| Animation | **Framer Motion** only | `useScroll` + `useSpring` covers the timeline scrub; GSAP was dropped as an unnecessary dependency |
 | 3D / particles | **@react-three/fiber + drei** for Our Universe star field | Instanced points, not DOM nodes |
 | State | **TanStack Query** for server state, Zustand for tiny UI state (identity, audio, nav) | No Redux |
 | Forms | react-hook-form + zod | Zod schemas shared with backend |
@@ -55,10 +55,27 @@ her/
 **Never do:**
 - Rounded-2xl white cards on gray-50 backgrounds (the "AI website" look)
 - Purple→pink 45° gradient buttons
-- Emoji as the only decoration
+- **Emoji. Anywhere.** Not in nav, not in labels, not in seed data. Emoji reads
+  as vibe-coded. Everything is a hand-drawn SVG from `components/Icon.tsx`.
 - Centered hero + 3 feature columns
 - Generic shadows (`shadow-lg` everywhere)
 - Bootstrap-ish navbars with a logo left and links right
+
+### 2.1a Her motifs — use these, they are the point
+
+She loves **tulips** and she is a **biotechnology** student (chemistry, lab work).
+Both are woven into the visual language rather than mentioned:
+
+| Motif | Where it lives |
+|---|---|
+| Tulip | The Reasons section icon and its bloom animation; the Our Story hero; loading flourishes. `components/motifs/Tulip.tsx` animates closed→open. |
+| DNA double helix | The Our Story timeline spine. `components/motifs/HelixSpine.tsx` — two sine strands with base-pair rungs, revealed by scroll. |
+| Benzene ring | The node marking each memory on the timeline. |
+| Molecule / bond | Constellation links between related stars in Our Universe. |
+| Flask, petri dish | Admin and empty-state flourishes. |
+
+Keep it structural, not decorative-literal — a helix as the spine of the story is
+right; a cartoon test tube saying "science!" is not.
 
 **Always do:**
 - Every section has its **own world**: own palette, own background behavior, own typography rhythm, own sound of motion

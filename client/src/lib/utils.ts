@@ -18,11 +18,11 @@ export function toDateInput(value?: string | Date | null): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** "Added by her ❤️" — attribution phrased the way a person would say it. */
+/** Attribution phrased the way a person would say it, never as a data label. */
 export function attribution(by: Author, names?: { me?: string; her?: string }): string {
-  if (by === 'both') return 'Added together 🫶';
-  if (by === 'her') return `Added by ${names?.her ?? 'her'} ❤️`;
-  return `Added by ${names?.me ?? 'him'} ❤️`;
+  if (by === 'both') return 'added together';
+  if (by === 'her') return `added by ${names?.her ?? 'her'}`;
+  return `added by ${names?.me ?? 'him'}`;
 }
 
 export function daysBetween(a: Date, b: Date): number {

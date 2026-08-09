@@ -133,7 +133,8 @@ const importantDateSchema = new Schema(
     recurrence: { type: String, enum: ['none', 'yearly'], default: 'none' },
     /** The single date the "days together" counter is measured from. */
     isAnchor: { type: Boolean, default: false },
-    emoji: { type: String, default: '❤️' },
+    /** Name of an icon in the client's icon set — never an emoji. */
+    icon: { type: String, default: 'heart' },
     ...baseFields,
   },
   baseOptions

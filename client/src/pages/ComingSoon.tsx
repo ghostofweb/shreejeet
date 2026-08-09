@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Cat, type CatPose } from '@/components/Cat';
+import { Icon, type IconName } from '@/components/Icon';
 import { revealUp, stagger } from '@/lib/motion';
 
 /**
@@ -12,7 +13,7 @@ export function ComingSoon({
   blurb,
   pose = 'sit',
 }: {
-  icon: string;
+  icon: IconName;
   title: string;
   blurb: string;
   pose?: CatPose;
@@ -34,10 +35,10 @@ export function ComingSoon({
         animate="show"
         className="relative z-10 flex flex-col items-center"
       >
-        <motion.span variants={revealUp} className="text-4xl">
-          {icon}
-        </motion.span>
-        <motion.h1 variants={revealUp} className="mt-4 font-display text-5xl sm:text-6xl">
+        <motion.div variants={revealUp} className="opacity-60">
+          <Icon name={icon} size={40} />
+        </motion.div>
+        <motion.h1 variants={revealUp} className="mt-5 font-display text-5xl sm:text-6xl">
           {title}
         </motion.h1>
         <motion.p variants={revealUp} className="mt-4 max-w-md text-balance opacity-55">
@@ -51,18 +52,9 @@ export function ComingSoon({
   );
 }
 
-export const StoryPage = () => (
-  <ComingSoon
-    icon="🏠"
-    title="Our Story"
-    blurb="The whole thing, from the beginning, in order. Add the first memory in the admin and it starts here."
-    pose="walk"
-  />
-);
-
 export const ReasonsPage = () => (
   <ComingSoon
-    icon="🌹"
+    icon="tulip"
     title="Reasons"
     blurb="One reason at a time, pulled at random from everything either of us has ever written down."
     pose="hold-heart"
@@ -71,7 +63,7 @@ export const ReasonsPage = () => (
 
 export const UniversePage = () => (
   <ComingSoon
-    icon="🌌"
+    icon="universe"
     title="Our Universe"
     blurb="A sky full of stars, and some of them are ours. Click one and it opens."
     pose="float"
@@ -80,7 +72,7 @@ export const UniversePage = () => (
 
 export const OpenWhenPage = () => (
   <ComingSoon
-    icon="💌"
+    icon="envelope"
     title="Open When…"
     blurb="Letters waiting for the moment you need them. Sealed until then."
     pose="hold-envelope"
@@ -89,7 +81,7 @@ export const OpenWhenPage = () => (
 
 export const ConfessionsPage = () => (
   <ComingSoon
-    icon="🫣"
+    icon="confessions"
     title="Confessions"
     blurb="Things one of us never quite said out loud."
     pose="peek"
@@ -98,7 +90,7 @@ export const ConfessionsPage = () => (
 
 export const DatesPage = () => (
   <ComingSoon
-    icon="🗓️"
+    icon="dates"
     title="Important Dates"
     blurb="Everything worth counting down to, and everything worth counting from."
     pose="point"

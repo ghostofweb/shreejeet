@@ -101,7 +101,7 @@ export const importantDateCreate = z.object({
   photo: mediaRef.optional().nullable(),
   recurrence: z.enum(['none', 'yearly']).default('none'),
   isAnchor: z.boolean().default(false),
-  emoji: z.string().max(8).default('❤️'),
+  icon: z.string().max(24).default('heart'),
   createdBy: author.default('me'),
 });
 export const importantDateUpdate = importantDateCreate.partial();

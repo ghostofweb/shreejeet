@@ -169,6 +169,76 @@
   }
 }
 
+/* ── Particle keyframes ───────────────────────────────────────────
+   Transform/opacity only, so these stay on the compositor and never
+   trigger layout while she scrolls. */
+
+@keyframes fall-fast {
+  from {
+    transform: translate3d(0, -10vh, 0);
+  }
+  to {
+    transform: translate3d(-6vw, 115vh, 0);
+  }
+}
+
+@keyframes fall-slow {
+  0% {
+    transform: translate3d(0, -8vh, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(4vw, 50vh, 0) rotate(180deg);
+  }
+  100% {
+    transform: translate3d(-3vw, 112vh, 0) rotate(360deg);
+  }
+}
+
+@keyframes drift-across {
+  from {
+    transform: translate3d(-40vw, 0, 0);
+  }
+  to {
+    transform: translate3d(120vw, 0, 0);
+  }
+}
+
+@keyframes rise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(3vw, -70vh, 0) scale(0.3);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(1.5vw, -4vh, 0);
+  }
+}
+
 /* Motion is decoration, never the only way to understand the page. */
 @media (prefers-reduced-motion: reduce) {
   *,

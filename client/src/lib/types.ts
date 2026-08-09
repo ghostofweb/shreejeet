@@ -135,7 +135,7 @@ export interface ImportantDate extends Base {
   photo?: MediaRef | null;
   recurrence: 'none' | 'yearly';
   isAnchor: boolean;
-  emoji: string;
+  icon: string;
 }
 
 export interface AdminStats {

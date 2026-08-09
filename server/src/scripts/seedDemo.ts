@@ -240,23 +240,23 @@ const dates = [
   {
     title: 'The day we met',
     date: anchor,
-    emoji: '❤️',
+    icon: 'heart',
     description: 'Where the counter starts.',
     isAnchor: true,
     createdBy: 'both',
   },
-  { title: 'Our first date', date: day(21), emoji: '🌹', createdBy: 'both' },
+  { title: 'Our first date', date: day(21), icon: 'tulip', createdBy: 'both' },
   {
     title: 'Our anniversary',
     date: new Date(anchor.getTime() + 365 * 86_400_000),
-    emoji: '🥂',
+    icon: 'sparkle',
     recurrence: 'yearly',
     createdBy: 'both',
   },
   {
     title: 'Her birthday',
     date: new Date('2000-01-01'),
-    emoji: '🎂',
+    icon: 'gift',
     recurrence: 'yearly',
     description: 'Placeholder — set the real date in the admin.',
     createdBy: 'me',
@@ -264,12 +264,12 @@ const dates = [
   {
     title: 'His birthday',
     date: new Date('2000-01-01'),
-    emoji: '🎉',
+    icon: 'gift',
     recurrence: 'yearly',
     description: 'Placeholder — set the real date in the admin.',
     createdBy: 'her',
   },
-  { title: 'The first trip', date: day(58), emoji: '✈️', createdBy: 'both' },
+  { title: 'The first trip', date: day(58), icon: 'pin', createdBy: 'both' },
 ];
 
 async function clearAll() {
