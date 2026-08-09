@@ -52,15 +52,6 @@ export function ComingSoon({
   );
 }
 
-export const ConfessionsPage = () => (
-  <ComingSoon
-    icon="confessions"
-    title="Confessions"
-    blurb="Things one of us never quite said out loud."
-    pose="peek"
-  />
-);
-
 export const DatesPage = () => (
   <ComingSoon
     icon="dates"

@@ -17,7 +17,8 @@ import Story from '@/pages/Story';
 import Reasons from '@/pages/Reasons';
 import Universe from '@/pages/Universe';
 import OpenWhen from '@/pages/OpenWhen';
-import { ConfessionsPage, DatesPage } from '@/pages/ComingSoon';
+import Confessions from '@/pages/Confessions';
+import { DatesPage } from '@/pages/ComingSoon';
 import { useAuth } from '@/store/auth';
 
 export default function App() {
@@ -47,7 +48,7 @@ export default function App() {
         <Route path="/reasons" element={<Reasons />} />
         <Route path="/universe" element={<Universe />} />
         <Route path="/open-when" element={<OpenWhen />} />
-        <Route path="/confessions" element={<ConfessionsPage />} />
+        <Route path="/confessions" element={<Confessions />} />
         <Route path="/dates" element={<DatesPage />} />
 
         <Route path="/admin" element={<Dashboard />} />
