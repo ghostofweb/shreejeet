@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ink & paper */
+    --ink: #1a1520;
+    --paper: #fdf6ec;
+    /* accents */
+    --blush: #e8a0a8;
+    --rose: #c9566b;
+    --gold: #e6bb6a;
+    --lilac: #9b8bd4;
+    --deep: #14101f;
+    --star: #f4efe4;
+
+    /* the current section paints these; everything else reads them */
+    --bg: var(--paper);
+    --fg: var(--ink);
+    --accent: var(--rose);
+
+    color-scheme: light dark;
+  }
+
+  /* Section worlds — set data-world on <body> and the whole page changes mood. */
+  [data-world='story'] {
+    --bg: var(--paper);
+    --fg: var(--ink);
+    --accent: var(--rose);
+  }
+  [data-world='reasons'] {
+    --bg: #fff4f0;
+    --fg: #3a2430;
+    --accent: var(--rose);
+  }
+  [data-world='universe'] {
+    --bg: var(--deep);
+    --fg: var(--star);
+    --accent: var(--lilac);
+  }
+  [data-world='letters'] {
+    --bg: #f6ead6;
+    --fg: #3a2c1d;
+    --accent: var(--gold);
+  }
+  [data-world='confessions'] {
+    --bg: #0c0a11;
+    --fg: #ded7ea;
+    --accent: var(--lilac);
+  }
+  [data-world='dates'] {
+    --bg: #191325;
+    --fg: #f2e8dd;
+    --accent: var(--gold);
+  }
+  [data-world='admin'] {
+    --bg: #17131f;
+    --fg: #efe6dc;
+    --accent: var(--blush);
+  }
+
+  * {
+    border-color: color-mix(in srgb, var(--fg) 12%, transparent);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: theme('fontFamily.body');
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition:
+      background-color 1.2s cubic-bezier(0.16, 1, 0.3, 1),
+      color 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: theme('fontFamily.display');
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  /* Visible, on-brand focus — never remove the ring. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* Thin, unobtrusive scrollbar that matches whichever world we're in. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--fg) 18%, transparent);
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+@layer components {
+  /* Paper: the tactile surface used for letters, notes, polaroids. */
+  .paper-surface {
+    background-color: #fbf3e4;
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(0, 0, 0, 0.025) 0 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0, 0, 0, 0.02) 0 1px, transparent 1px);
+    background-size: 7px 7px, 11px 11px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 18px 40px -20px rgba(30, 18, 10, 0.45);
+  }
+
+  /* Depth without a generic drop shadow: light from above, shade below. */
+  .lift {
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #fff 40%, transparent) inset,
+      0 24px 60px -30px color-mix(in srgb, var(--ink) 70%, transparent);
+  }
+
+  .vignette::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  .grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Motion is decoration, never the only way to understand the page. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
