@@ -22,16 +22,36 @@ await mongoose.connect(mem.getUri('our-little-world-dev'));
 
 const PASSWORD = 'devpassword';
 
-// Both accounts, so identity-aware sections (Reasons, attribution) work offline.
-const meName = env.seed.me.name || 'Jeet';
-const herName = env.seed.her.name || 'Shree';
-const hash = await bcrypt.hash(PASSWORD, 10);
+/**
+ * Both accounts, so identity-aware sections work offline.
+ *
+ * Use the real credentials from .env when they are set. Inventing separate
+ * throwaway logins meant the details you had already configured were quietly
+ * wrong here, which is a confusing thing to hit at a login screen.
+ */
+const account = (
+  seed: { email: string; password: string; name: string },
+  fallbackEmail: string,
+  fallbackName: string
+) => ({
+  email: seed.email || fallbackEmail,
+  password: seed.password || PASSWORD,
+  name: seed.name || fallbackName,
+});
 
-await User.create({ email: 'me@example.com', passwordHash: hash, displayName: meName, role: 'me' });
+const me = account(env.seed.me, 'me@example.com', 'Jeet');
+const her = account(env.seed.her, 'her@example.com', 'Shree');
+
 await User.create({
-  email: 'her@example.com',
-  passwordHash: hash,
-  displayName: herName,
+  email: me.email.toLowerCase(),
+  passwordHash: await bcrypt.hash(me.password, 10),
+  displayName: me.name,
+  role: 'me',
+});
+await User.create({
+  email: her.email.toLowerCase(),
+  passwordHash: await bcrypt.hash(her.password, 10),
+  displayName: her.name,
   role: 'her',
 });
 
@@ -40,9 +60,13 @@ await seedDemoContent(true);
 
 createApp().listen(env.port, () => {
   console.log(`\n🐈 dev API (in-memory, seeded with demo content) on http://localhost:${env.port}/api/v1`);
-  console.log(`   ${meName}:  me@example.com  /  ${PASSWORD}`);
-  console.log(`   ${herName}: her@example.com /  ${PASSWORD}`);
-  console.log('   ⚠️  data is wiped on every restart\n');
+  console.log(`   ${me.name}:  ${me.email}`);
+  console.log(`   ${her.name}: ${her.email}`);
+  console.log(
+    env.seed.me.email
+      ? '   (your real .env passwords)\n   ⚠️  data is wiped on every restart\n'
+      : `   password: ${PASSWORD}\n   ⚠️  data is wiped on every restart\n`
+  );
 });
 
 const shutdown = async () => {

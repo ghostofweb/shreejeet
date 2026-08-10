@@ -1,66 +1,54 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { DUR, EASE } from '@/lib/motion';
-import { FINDS, INTRO_COPY, type IntroFind } from './config';
-import { FindArt } from './FindArt';
+import { Cat } from '@/components/Cat';
+import { INTRO_COPY, INTRO_LINES } from './config';
+import { Bloom, makeBloomables } from './Bloomables';
 
 /**
- * A pitch-black room lit only by a candle at her finger.
+ * A dark room that wakes up wherever the candle goes.
  *
- * Layering is what makes the effect work:
- *   lower world  — everything still hidden, only visible through the mask
- *   dark overlay — a fixed sheet with a moving hole cut in it
- *   upper world  — whatever she has already found, permanently lit
+ * There is deliberately nothing to find and nothing to get wrong. Everything is
+ * already visible as a dim silhouette; passing the light near it opens it and
+ * it stays lit. An earlier version hid six things and made her hunt, which
+ * turned a gift into a chore.
  *
- * The candle position is written straight to CSS custom properties from a rAF
- * loop, so React never re-renders while she moves.
+ * Once most of the room is awake it all lifts, and the birthday moment follows.
  */
 
-/**
- * The room is exactly one screen. An earlier version was two screens wide with
- * an edge-scrolling camera; it added a whole class of bugs and, worse, meant
- * she could be hunting in a space she had no way to picture. One screen she can
- * sweep is both simpler and easier to feel your way around.
- */
-const ROOM = 1;
-/** How close the candle must get before something shimmers. */
-const NEAR = 150;
-/** How close before a tap counts as touching it. */
-const REACH = 78;
-/** Silence before the room offers a hint, in ms. */
-const IDLE_HINT_MS = 25_000;
-const HOLD_MS = 1400;
+/** How near the candle has to pass, relative to the screen. Generous on
+ *  purpose — scaling it keeps a phone from finishing in two swipes. */
+const reachFor = (vw: number, vh: number) => Math.max(84, Math.min(vw, vh) * 0.21);
+/** Fraction of the room awake before it lifts. */
+const THRESHOLD = 0.72;
+const COUNT = 46;
 
-interface Props {
-  onComplete: () => void;
-  onSkip: () => void;
-}
-
-export function DarkRoom({ onComplete, onSkip }: Props) {
+export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const reduced = useReducedMotion();
-  const rootRef = useRef<HTMLDivElement>(null);
   const maskRef = useRef<HTMLDivElement>(null);
   const flameRef = useRef<HTMLDivElement>(null);
+  const catRef = useRef<HTMLDivElement>(null);
 
-  const [found, setFound] = useState<string[]>([]);
-  const [openLine, setOpenLine] = useState<IntroFind | null>(null);
-  const [nearId, setNearId] = useState<string | null>(null);
-  const [holdId, setHoldId] = useState<string | null>(null);
-  const [holdProgress, setHoldProgress] = useState(0);
-  const [nudgeId, setNudgeId] = useState<string | null>(null);
-  const [showSkip, setShowSkip] = useState(false);
+  const items = useMemo(() => makeBloomables(COUNT), []);
+  const [lit, setLit] = useState<Set<number>>(() => new Set());
   const [started, setStarted] = useState(false);
+  const [showSkip, setShowSkip] = useState(false);
+  const [lifting, setLifting] = useState(false);
 
-  // Everything the render loop needs, kept out of React state.
-  const pointer = useRef({ x: 0, y: 0 });
-  const lastActivity = useRef(performance.now());
-  const foundRef = useRef<string[]>([]);
-  foundRef.current = found;
+  const pointer = useRef({ x: -999, y: -999 });
+  const catPos = useRef({ x: 0, y: 0 });
+  /** Where the light was last frame, so we can wake along the path. */
+  const prev = useRef({ x: -999, y: -999 });
+  const litRef = useRef<Set<number>>(new Set());
+  litRef.current = lit;
 
-  const remaining = FINDS.filter((f) => !found.includes(f.id));
-  const done = remaining.length === 0;
+  const progress = lit.size / items.length;
+  const lineIndex = Math.min(
+    INTRO_LINES.length - 1,
+    Math.floor(progress * (INTRO_LINES.length + 0.6))
+  );
 
-  /* ── the candle, and what is within reach ─────────────────── */
+  /* ── the candle, and everything it wakes ───────────────────── */
   useEffect(() => {
     if (reduced) return;
     let frame = 0;
@@ -70,234 +58,186 @@ export function DarkRoom({ onComplete, onSkip }: Props) {
       const vh = window.innerHeight;
       const p = pointer.current;
 
-      // The flame breathes, so the light never looks like a flashlight.
-      const flicker = 1 + Math.sin(performance.now() / 190) * 0.045;
+      // The flame breathes so the light never reads as a torch.
+      const flicker = 1 + Math.sin(performance.now() / 190) * 0.05;
       if (maskRef.current) {
         maskRef.current.style.setProperty('--lx', `${p.x}px`);
         maskRef.current.style.setProperty('--ly', `${p.y}px`);
-        maskRef.current.style.setProperty('--lr', `${168 * flicker}px`);
+        maskRef.current.style.setProperty('--lr', `${230 * flicker}px`);
       }
       if (flameRef.current) {
         flameRef.current.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
       }
 
-      // What is within reach right now?
-      let closest: { id: string; d: number } | null = null;
-      for (const f of FINDS) {
-        if (foundRef.current.includes(f.id)) continue;
-        const sx = f.x * vw;
-        const sy = f.y * vh;
-        const d = Math.hypot(sx - p.x, sy - p.y);
-        if (!closest || d < closest.d) closest = { id: f.id, d };
+      // The cat trails after the light, a long way behind.
+      catPos.current.x += (p.x - 70 - catPos.current.x) * 0.022;
+      catPos.current.y += (p.y + 30 - catPos.current.y) * 0.022;
+      if (catRef.current) {
+        catRef.current.style.transform = `translate3d(${catPos.current.x}px, ${catPos.current.y}px, 0)`;
       }
-      setNearId(closest && closest.d < NEAR ? closest.id : null);
+
+      // Anything the light passes wakes up — measured against the whole path
+      // travelled since the last frame, not just where the pointer landed. A
+      // quick swipe would otherwise jump straight over things.
+      const woken: number[] = [];
+      for (const item of items) {
+        if (litRef.current.has(item.id)) continue;
+        const sx = (item.x / 100) * vw;
+        const sy = (item.y / 100) * vh;
+        if (distanceToSegment(sx, sy, prev.current, p) < reachFor(vw, vh)) woken.push(item.id);
+      }
+      prev.current = { x: p.x, y: p.y };
+      if (woken.length) {
+        setLit((prev) => {
+          const next = new Set(prev);
+          woken.forEach((id) => next.add(id));
+          return next;
+        });
+      }
 
       frame = requestAnimationFrame(tick);
     };
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [reduced]);
+  }, [items, reduced]);
 
-  /* ── a gentle nudge if she stalls ──────────────────────────── */
+  /* enough of the room is awake — lift it */
   useEffect(() => {
-    const id = window.setInterval(() => {
-      if (done) return;
-      if (performance.now() - lastActivity.current < IDLE_HINT_MS) return;
-      const next = FINDS.find((f) => !foundRef.current.includes(f.id));
-      if (!next) return;
-      setNudgeId(next.id);
-      window.setTimeout(() => setNudgeId(null), 2600);
-      lastActivity.current = performance.now();
-    }, 4000);
-    return () => clearInterval(id);
-  }, [done]);
+    if (!lifting && progress >= THRESHOLD) setLifting(true);
+  }, [progress, lifting]);
 
-  /* the skip only appears once she has had a moment to settle */
+  /*
+   * Hand over once the lift has played. This is a separate effect on purpose:
+   * combined with the one above, setting `lifting` re-ran the effect and its
+   * own cleanup cancelled the timer, so the finale never arrived.
+   */
   useEffect(() => {
-    const t = window.setTimeout(() => setShowSkip(true), 6000);
+    if (!lifting) return;
+    const t = window.setTimeout(onComplete, 2600);
+    return () => clearTimeout(t);
+  }, [lifting, onComplete]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowSkip(true), 7000);
     return () => clearTimeout(t);
   }, []);
 
-  const open = useCallback((f: IntroFind) => {
-    setFound((prev) => (prev.includes(f.id) ? prev : [...prev, f.id]));
-    setOpenLine(f);
-    lastActivity.current = performance.now();
-    window.setTimeout(() => setOpenLine(null), f.photo ? 6000 : 4200);
-  }, []);
-
-  /* ── input ─────────────────────────────────────────────────── */
   const onPointerMove = (e: React.PointerEvent) => {
-    // Sit the light a little above her fingertip, or her hand covers it.
-    const lift = e.pointerType === 'touch' ? 46 : 0;
-    pointer.current = { x: e.clientX, y: e.clientY - lift };
-    if (!started) setStarted(true);
-    lastActivity.current = performance.now();
-  };
-
-  const hitTest = (): IntroFind | null => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const p = pointer.current;
-    for (const f of FINDS) {
-      if (foundRef.current.includes(f.id)) continue;
-      const sx = f.x * vw;
-      const sy = f.y * vh;
-      if (Math.hypot(sx - p.x, sy - p.y) < REACH) return f;
+    // On touch the light sits above her fingertip, or her hand covers it.
+    const lift = e.pointerType === 'touch' ? 52 : 0;
+    const next = { x: e.clientX, y: e.clientY - lift };
+    if (!started) {
+      // Drop the cat and the trail where she first touches, not at 0,0.
+      catPos.current = { ...next };
+      prev.current = { ...next };
+      setStarted(true);
     }
-    return null;
+    pointer.current = next;
   };
 
-  const holdTimer = useRef<number | null>(null);
-  const holdDone = useRef<number | null>(null);
-
-  const onPointerDown = () => {
-    const hit = hitTest();
-    if (!hit) return;
-    lastActivity.current = performance.now();
-
-    if (hit.kind === 'hold') {
-      const begin = performance.now();
-      setHoldId(hit.id);
-
-      // A timer decides when the hold is done; the frame loop only draws the
-      // ring. If animation frames stall — a notification, a backgrounded tab —
-      // her hold still completes instead of silently never finishing.
-      holdDone.current = window.setTimeout(() => {
-        cancelHold();
-        open(hit);
-      }, HOLD_MS);
-
-      const step = () => {
-        setHoldProgress(Math.min(1, (performance.now() - begin) / HOLD_MS));
-        holdTimer.current = requestAnimationFrame(step);
-      };
-      holdTimer.current = requestAnimationFrame(step);
-      return;
-    }
-    open(hit);
-  };
-
-  const cancelHold = () => {
-    if (holdTimer.current) cancelAnimationFrame(holdTimer.current);
-    if (holdDone.current) clearTimeout(holdDone.current);
-    holdTimer.current = null;
-    holdDone.current = null;
-    setHoldId(null);
-    setHoldProgress(0);
-  };
-
-  /* ── reduced motion: no room, just the words ───────────────── */
+  /* ── reduced motion: skip the room entirely ────────────────── */
   if (reduced) {
     return (
-      <div className="min-h-dvh bg-[#07060c] px-6 py-24 text-[#f0e6d8]">
-        <div className="mx-auto max-w-md space-y-8">
-          {FINDS.map((f) => (
-            <p key={f.id} className="font-hand text-2xl leading-relaxed">
-              {f.line}
-            </p>
-          ))}
-          <button
-            onClick={onComplete}
-            className="mt-8 rounded-full border border-current/30 px-6 py-3 text-sm"
-          >
-            continue
-          </button>
-        </div>
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-8 bg-[#07060c] px-6 text-center text-[#f0e6d8]">
+        {INTRO_LINES.map((l) => (
+          <p key={l} className="max-w-md font-hand text-2xl">
+            {l}
+          </p>
+        ))}
+        <button onClick={onComplete} className="rounded-full border border-current/30 px-6 py-3 text-sm">
+          continue
+        </button>
       </div>
     );
   }
 
   return (
     <div
-      ref={rootRef}
       onPointerMove={onPointerMove}
-      onPointerDown={onPointerDown}
-      onPointerUp={cancelHold}
-      onPointerCancel={cancelHold}
+      onPointerDown={onPointerMove}
       className="fixed inset-0 z-[100] touch-none overflow-hidden bg-[#07060c]"
       style={{ cursor: 'none' }}
     >
-      {/* ── lower world: still hidden ── */}
-      <World>
+      {/* the room, only visible where light falls */}
+      <div className="absolute inset-0">
         <RoomScene />
-        {remaining.map((f) => (
-          <Placed key={f.id} find={f}>
-            <FindArt
-              find={f}
-              found={false}
-              near={nearId === f.id || nudgeId === f.id}
-              holdProgress={holdId === f.id ? holdProgress : 0}
-            />
-          </Placed>
-        ))}
-      </World>
+        <motion.div
+          className="absolute inset-0"
+          animate={lifting ? { y: '-115%', opacity: 0 } : { y: 0, opacity: 1 }}
+          transition={{ duration: 2.4, ease: EASE.soft }}
+        >
+          {items.map((item) => (
+            <Bloom key={item.id} item={item} lit={lit.has(item.id)} />
+          ))}
+        </motion.div>
+      </div>
 
-      {/* ── the darkness, with a hole where the candle is ── */}
-      <div
+      {/* the darkness, with a hole cut where the candle is */}
+      <motion.div
         ref={maskRef}
         className="pointer-events-none absolute inset-0 bg-[#07060c]"
+        animate={{ opacity: lifting ? 0 : 1 }}
+        transition={{ duration: 2, ease: EASE.soft }}
         style={
           {
-            '--lx': '50%',
-            '--ly': '50%',
-            '--lr': '168px',
+            '--lx': '-999px',
+            '--ly': '-999px',
+            '--lr': '230px',
             maskImage:
-              'radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 0%, transparent 42%, rgba(0,0,0,0.75) 72%, #000 100%)',
+              'radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 0%, transparent 40%, rgba(0,0,0,0.72) 70%, #000 100%)',
             WebkitMaskImage:
-              'radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 0%, transparent 42%, rgba(0,0,0,0.75) 72%, #000 100%)',
+              'radial-gradient(circle var(--lr) at var(--lx) var(--ly), transparent 0%, transparent 40%, rgba(0,0,0,0.72) 70%, #000 100%)',
           } as React.CSSProperties
         }
       />
 
-      {/* ── upper world: everything she has found stays lit ── */}
-      <World>
-        {FINDS.filter((f) => found.includes(f.id)).map((f) => (
-          <Placed key={f.id} find={f}>
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 h-[16rem] w-[16rem] -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle, rgba(255,206,140,0.34), rgba(255,190,120,0.10) 45%, transparent 70%)',
-              }}
-            />
-            <FindArt find={f} found near={false} holdProgress={0} />
-          </Placed>
-        ))}
-      </World>
+      {/* everything already awake stays lit, above the darkness */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        animate={lifting ? { y: '-115%', opacity: 0 } : { y: 0, opacity: 1 }}
+        transition={{ duration: 2.4, ease: EASE.soft }}
+      >
+        {items
+          .filter((i) => lit.has(i.id))
+          .map((item) => (
+            <Bloom key={item.id} item={item} lit />
+          ))}
+      </motion.div>
 
-      {/* ── the candle flame itself ── */}
+      {/* the cat, trailing after her */}
+      <div ref={catRef} className="pointer-events-none absolute left-0 top-0 z-20">
+        <motion.div
+          className="-translate-x-1/2 -translate-y-1/2"
+          animate={{ opacity: started ? 1 : 0 }}
+          transition={{ duration: 1.2, delay: 1 }}
+        >
+          <Cat pose="walk" mood="happy" size={58} />
+        </motion.div>
+      </div>
+
+      {/* the flame */}
       <div ref={flameRef} className="pointer-events-none absolute left-0 top-0 z-20">
         <Flame />
       </div>
 
-      {/* ── the line she just uncovered ── */}
-      <AnimatePresence>
-        {openLine && (
-          <motion.div
-            key={openLine.id}
-            initial={{ opacity: 0, y: 16 }}
+      {/* a line, every so often */}
+      <AnimatePresence mode="wait">
+        {started && !lifting && progress > 0.12 && (
+          <motion.p
+            key={lineIndex}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: DUR.slow, ease: EASE.soft }}
-            className="pointer-events-none absolute inset-x-0 bottom-[12dvh] z-30 flex flex-col items-center gap-4 px-8 text-center"
+            className="pointer-events-none absolute inset-x-0 bottom-[11dvh] z-30 px-8 text-center font-hand text-[1.8rem] text-[#f6e7cf]/85"
           >
-            {openLine.photo && (
-              <img
-                src={openLine.photo}
-                alt=""
-                className="max-h-[26dvh] rounded-[3px] border-4 border-[#fbf5ea] object-cover shadow-2xl"
-              />
-            )}
-            <p className="max-w-md text-balance font-hand text-[1.7rem] leading-snug text-[#f6e7cf]">
-              {openLine.line}
-            </p>
-          </motion.div>
+            {INTRO_LINES[lineIndex]}
+          </motion.p>
         )}
       </AnimatePresence>
 
-      {/* ── the opening hint, until she moves ── */}
+      {/* the opening hint */}
       <AnimatePresence>
         {!started && (
           <motion.div
@@ -311,7 +251,7 @@ export function DarkRoom({ onComplete, onSkip }: Props) {
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 2.4, duration: 1.6 }}
+              transition={{ delay: 2.2, duration: 1.6 }}
               className="text-xs uppercase tracking-[0.24em] text-[#e8d6b8]/40"
             >
               {INTRO_COPY.openingNudge}
@@ -320,114 +260,60 @@ export function DarkRoom({ onComplete, onSkip }: Props) {
         )}
       </AnimatePresence>
 
-      {/* ── progress, and the way out ── */}
-      <div className="pointer-events-none absolute inset-x-0 top-6 z-30 flex items-center justify-between px-6">
-        <span className="text-[0.62rem] uppercase tracking-[0.24em] text-[#e8d6b8]/35">
-          {found.length} of {FINDS.length} {INTRO_COPY.progressLabel}
-        </span>
-        {showSkip && !done && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={onSkip}
-            className="pointer-events-auto text-[0.62rem] uppercase tracking-[0.24em] text-[#e8d6b8]/25 transition-colors hover:text-[#e8d6b8]/70"
-          >
-            {INTRO_COPY.skip}
-          </motion.button>
-        )}
+      {/* how far along, drawn as a thin line rather than a score */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-30 h-px bg-white/5">
+        <motion.div
+          className="h-full bg-gradient-to-r from-[#ffb347] to-[#ffe3b0]"
+          animate={{ width: `${Math.min(100, (progress / THRESHOLD) * 100)}%` }}
+          transition={{ duration: 0.8, ease: EASE.soft }}
+        />
       </div>
 
-      {/* ── the door, once everything is found ── */}
-      <AnimatePresence>
-        {done && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.4, delay: 1.2 }}
-            className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6 bg-black/40 backdrop-blur-[2px]"
-          >
-            <motion.button
-              onClick={onComplete}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1, ease: EASE.soft, delay: 1.6 }}
-              className="group relative flex h-[15rem] w-[9rem] items-center justify-center rounded-t-[4.5rem] border border-[#ffd08a]/40"
-              style={{
-                background:
-                  'linear-gradient(180deg, rgba(255,208,138,0.16), rgba(255,208,138,0.04))',
-                boxShadow: '0 0 90px -10px rgba(255,208,138,0.6)',
-              }}
-              aria-label={INTRO_COPY.doorPrompt}
-            >
-              <motion.span
-                className="absolute inset-y-6 left-1/2 w-px -translate-x-1/2 bg-[#ffe3b0]"
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </motion.button>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 2.4, duration: 1.2 }}
-              className="font-hand text-2xl text-[#f6e7cf]/80"
-            >
-              {INTRO_COPY.doorPrompt}
-            </motion.p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showSkip && !lifting && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={onSkip}
+          className="absolute right-6 top-6 z-30 text-[0.62rem] uppercase tracking-[0.24em] text-[#e8d6b8]/25 transition-colors hover:text-[#e8d6b8]/70"
+        >
+          {INTRO_COPY.skip}
+        </motion.button>
+      )}
     </div>
   );
 }
 
-/* ── helpers ──────────────────────────────────────────────────── */
-
-/** One screen's worth of room. */
-function World({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="absolute left-0 top-0"
-      style={{ width: `${ROOM * 100}vw`, height: `${ROOM * 100}dvh` }}
-    >
-      {children}
-    </div>
-  );
+/** Shortest distance from a point to the segment the light just travelled. */
+function distanceToSegment(
+  px: number,
+  py: number,
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - b.x, py - b.y);
+  const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (py - a.y) * dy) / lenSq));
+  return Math.hypot(px - (a.x + t * dx), py - (a.y + t * dy));
 }
 
-function Placed({ find, children }: { find: IntroFind; children: React.ReactNode }) {
-  return (
-    <div
-      className="absolute -translate-x-1/2 -translate-y-1/2"
-      style={{ left: `${find.x * 100}%`, top: `${find.y * 100}%` }}
-    >
-      {children}
-    </div>
-  );
-}
+/* ── the room she is standing in ──────────────────────────────── */
 
-/**
- * The room she is actually in. Without this the light has nothing to fall on
- * and the darkness reads as an empty screen rather than a place — so sweeping
- * the candle around feels like progress even between finds.
- */
 function RoomScene() {
   return (
     <div aria-hidden className="absolute inset-0">
-      {/* wall, then floor */}
       <div
-        className="absolute inset-x-0 top-0 h-[62%]"
+        className="absolute inset-x-0 top-0 h-[58%]"
         style={{ background: 'linear-gradient(180deg, #17131f 0%, #221a2b 100%)' }}
       />
       <div
-        className="absolute inset-x-0 bottom-0 h-[38%]"
+        className="absolute inset-x-0 bottom-0 h-[42%]"
         style={{ background: 'linear-gradient(180deg, #2a2030 0%, #1a141f 100%)' }}
       />
-      {/* the line where they meet */}
-      <div className="absolute inset-x-0 top-[62%] h-px bg-[#3a2d42]" />
-
-      {/* floorboards, running away from the viewer */}
+      <div className="absolute inset-x-0 top-[58%] h-px bg-[#3a2d42]" />
       <div
-        className="absolute inset-x-0 bottom-0 h-[38%] opacity-45"
+        className="absolute inset-x-0 bottom-0 h-[42%] opacity-40"
         style={{
           backgroundImage:
             'repeating-linear-gradient(90deg, transparent 0 118px, rgba(0,0,0,0.5) 118px 120px)',
@@ -435,35 +321,34 @@ function RoomScene() {
       />
       {/* wallpaper: a faint helix, because of course it is */}
       <div
-        className="absolute inset-x-0 top-0 h-[62%] opacity-[0.13]"
+        className="absolute inset-x-0 top-0 h-[58%] opacity-[0.12]"
         style={{
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='150'%3E%3Cg fill='none' stroke='%23c9a9ff' stroke-width='2'%3E%3Cpath d='M20 0 C20 38, 70 45, 70 75 C70 105, 20 112, 20 150'/%3E%3Cpath d='M70 0 C70 38, 20 45, 20 75 C20 105, 70 112, 70 150'/%3E%3C/g%3E%3C/svg%3E\")",
           backgroundSize: '90px 150px',
         }}
       />
-      <div className="grain absolute inset-0 opacity-30" />
+      <div className="grain absolute inset-0 opacity-25" />
     </div>
   );
 }
 
-/** A small flame with a warm halo, sat at her fingertip. */
 function Flame() {
   return (
     <span className="pointer-events-none relative block -translate-x-1/2 -translate-y-1/2">
       <span
-        className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        className="absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
           background:
-            'radial-gradient(circle, rgba(255,196,120,0.30), rgba(255,170,90,0.08) 45%, transparent 70%)',
+            'radial-gradient(circle, rgba(255,196,120,0.32), rgba(255,170,90,0.09) 45%, transparent 70%)',
         }}
       />
       <motion.svg
-        width="22"
-        height="30"
+        width="24"
+        height="32"
         viewBox="0 0 22 30"
         className="relative"
-        animate={{ scaleY: [1, 1.12, 0.96, 1], scaleX: [1, 0.94, 1.04, 1] }}
+        animate={{ scaleY: [1, 1.14, 0.95, 1], scaleX: [1, 0.93, 1.05, 1] }}
         transition={{ duration: 0.7, repeat: Infinity, ease: 'easeInOut' }}
         style={{ transformOrigin: '11px 26px' }}
       >
