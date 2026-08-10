@@ -1,10 +1,12 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Loading } from '@/components/ui/States';
 import { ResourcePage } from '@/components/admin/resource';
 import Login from '@/pages/Login';
 import { useAuth } from '@/store/auth';
+import { Intro } from '@/intro/Intro';
+import { useIntroGate } from '@/intro/useIntroGate';
 import {
   confessionsConfig,
   datesConfig,
@@ -49,6 +51,8 @@ function useDocumentTitle() {
 export default function App() {
   const status = useAuth((s) => s.status);
   const restore = useAuth((s) => s.restore);
+  const { shouldPlay, finish } = useIntroGate();
+  const [introDismissed, setIntroDismissed] = useState(false);
   useDocumentTitle();
 
   useEffect(() => {
@@ -63,6 +67,19 @@ export default function App() {
       <Routes>
         <Route path="*" element={<Login />} />
       </Routes>
+    );
+  }
+
+  // The intro replaces everything while it runs — she should not be able to see
+  // past it, and nothing behind it should be loading either.
+  if (shouldPlay && !introDismissed) {
+    return (
+      <Intro
+        onDone={() => {
+          finish();
+          setIntroDismissed(true);
+        }}
+      />
     );
   }
 

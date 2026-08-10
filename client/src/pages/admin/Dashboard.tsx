@@ -7,6 +7,7 @@ import { DUR, EASE, revealUp, stagger } from '@/lib/motion';
 import { Cat } from '@/components/Cat';
 import { Icon, type IconName } from '@/components/Icon';
 import { useAuth } from '@/store/auth';
+import { IntroControls } from '@/components/admin/IntroControls';
 
 const ROWS = [
   { key: 'memories', icon: 'heart', label: 'Memories', to: '/admin/story' },
@@ -82,6 +83,8 @@ export default function Dashboard() {
             </Link>
           ))}
         </motion.div>
+
+        <IntroControls />
 
         <motion.div
           variants={revealUp}
