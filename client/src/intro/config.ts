@@ -1,14 +1,19 @@
 /**
  * EVERYTHING YOU WRITE FOR THE INTRO LIVES HERE.
  *
- * The intro asks nothing of her. She moves a candle through a dark room and
- * everything it touches wakes up — flowers open, stars lift, fireflies scatter.
- * There is nothing to find, nothing to get wrong, and no counter. When most of
- * the room is awake it all rises, and the birthday moment happens.
+ * Four beats, about ninety seconds, and she never has to work anything out:
+ *
+ *   1. a cord hangs in the dark — she pulls it, and gets a candle
+ *   2. a dark room that wakes wherever the candle goes, and remembers where
+ *      she walked; three envelopes are lying about with a line each
+ *   3. a cake — hold to blow out the candles
+ *   4. black, a beat of silence, and then the birthday moment
  */
 
 export const INTRO_COPY = {
-  /** On screen before she has moved anything. */
+  /** Beat 1 — on screen while the cord is still hanging. */
+  cordHint: 'there is a light in here somewhere',
+  /** Beat 2 — before she has moved the candle. */
   openingHint: 'it is dark in here',
   /** Appears a beat later. */
   openingNudge: 'move the light around',
@@ -16,18 +21,40 @@ export const INTRO_COPY = {
 };
 
 /**
- * Shown one at a time as more of the room wakes up, roughly every fifth of the
- * way. Keep them short — they appear over the top of everything.
+ * Beat 2, ambient. Shown small at the bottom, one at a time, as more of the
+ * room wakes up. Keep them short — they sit over the top of everything.
  */
 export const INTRO_LINES: string[] = [
   'Placeholder — you found the light.',
   'Placeholder — keep going.',
-  'Placeholder — something you would say to her here.',
   'Placeholder — nearly there.',
 ];
 
+/**
+ * Beat 2, the good ones. Three envelopes are lying around the room. Passing
+ * the candle over one opens it and shows the line big, in handwriting, for a
+ * few seconds. She is not required to find them — which is exactly why finding
+ * one feels like a secret. Put the lines you actually mean here.
+ */
+export const INTRO_NOTES: string[] = [
+  'Placeholder — the first thing you would want her to read.',
+  'Placeholder — the second one.',
+  'Placeholder — the third, and the best of the three.',
+];
+
+/** Beat 3 — the cake. */
+export const WISH = {
+  prompt: 'make a wish',
+  /** Under the prompt, small. */
+  hint: 'press and hold',
+  /** While she is holding. */
+  holding: 'keep holding',
+  /** How many candles are on the cake. */
+  candles: 5,
+};
+
 export const FINALE = {
-  /** Written on, letter by letter, in handwriting. The moment. */
+  /** Written on, left to right, in handwriting, out of the dark. The moment. */
   title: 'Happy birthday, Shree',
   /** Underneath, smaller. */
   subtitle: 'Placeholder — one sentence. The one you actually mean.',

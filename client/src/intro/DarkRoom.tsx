@@ -2,8 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { DUR, EASE } from '@/lib/motion';
 import { Cat } from '@/components/Cat';
-import { INTRO_COPY, INTRO_LINES } from './config';
+import { INTRO_COPY, INTRO_LINES, INTRO_NOTES } from './config';
 import { Bloom, makeBloomables } from './Bloomables';
+import { IntroEnvelope, NOTE_SPOTS, NoteOverlay } from './Envelopes';
+import { useTrail } from './Trail';
 
 /**
  * A dark room that wakes up wherever the candle goes.
@@ -22,6 +24,10 @@ const reachFor = (vw: number, vh: number) => Math.max(84, Math.min(vw, vh) * 0.2
 /** Fraction of the room awake before it lifts. */
 const THRESHOLD = 0.72;
 const COUNT = 46;
+/** Envelopes are bigger than a tulip, so they catch from further out. */
+const NOTE_REACH = 1.35;
+/** Long enough to read a line twice without it feeling like it is waiting. */
+const NOTE_DWELL = 5200;
 
 export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const reduced = useReducedMotion();
@@ -35,12 +41,22 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
   const [showSkip, setShowSkip] = useState(false);
   const [lifting, setLifting] = useState(false);
 
+  const { canvasRef, paint } = useTrail();
+  const [openNotes, setOpenNotes] = useState<Set<number>>(() => new Set());
+  const [activeNote, setActiveNote] = useState<number | null>(null);
+  /** Two envelopes caught in one sweep would otherwise fight over the screen. */
+  const noteQueue = useRef<number[]>([]);
+  const openNotesRef = useRef<Set<number>>(new Set());
+  openNotesRef.current = openNotes;
+
   const pointer = useRef({ x: -999, y: -999 });
   const catPos = useRef({ x: 0, y: 0 });
   /** Where the light was last frame, so we can wake along the path. */
   const prev = useRef({ x: -999, y: -999 });
   const litRef = useRef<Set<number>>(new Set());
   litRef.current = lit;
+  /** Read inside the animation frame, where `started` would be a stale capture. */
+  const startedRef = useRef(false);
 
   const progress = lit.size / items.length;
   const lineIndex = Math.min(
@@ -86,6 +102,25 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
         const sy = (item.y / 100) * vh;
         if (distanceToSegment(sx, sy, prev.current, p) < reachFor(vw, vh)) woken.push(item.id);
       }
+
+      // The envelopes, on the same path test.
+      const found: number[] = [];
+      NOTE_SPOTS.forEach((spot, i) => {
+        if (openNotesRef.current.has(i)) return;
+        const sx = (spot.x / 100) * vw;
+        const sy = (spot.y / 100) * vh;
+        if (distanceToSegment(sx, sy, prev.current, p) < reachFor(vw, vh) * NOTE_REACH) found.push(i);
+      });
+      if (found.length) {
+        setOpenNotes((was) => {
+          const next = new Set(was);
+          found.forEach((i) => next.add(i));
+          return next;
+        });
+        noteQueue.current.push(...found);
+      }
+
+      if (startedRef.current) paint(prev.current, p);
       prev.current = { x: p.x, y: p.y };
       if (woken.length) {
         setLit((prev) => {
@@ -100,7 +135,25 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [items, reduced]);
+  }, [items, reduced, paint]);
+
+  /*
+   * Show queued notes one at a time. Driven off `openNotes` and `activeNote`
+   * rather than a timer chain so a note opened while another is up simply waits
+   * its turn instead of stomping on it.
+   */
+  useEffect(() => {
+    if (activeNote !== null) return;
+    const next = noteQueue.current.shift();
+    if (next === undefined) return;
+    setActiveNote(next);
+  }, [activeNote, openNotes]);
+
+  useEffect(() => {
+    if (activeNote === null) return;
+    const t = window.setTimeout(() => setActiveNote(null), NOTE_DWELL);
+    return () => clearTimeout(t);
+  }, [activeNote]);
 
   /* enough of the room is awake — lift it */
   useEffect(() => {
@@ -131,6 +184,7 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
       // Drop the cat and the trail where she first touches, not at 0,0.
       catPos.current = { ...next };
       prev.current = { ...next };
+      startedRef.current = true;
       setStarted(true);
     }
     pointer.current = next;
@@ -140,7 +194,7 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
   if (reduced) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-8 bg-[#07060c] px-6 text-center text-[#f0e6d8]">
-        {INTRO_LINES.map((l) => (
+        {[...INTRO_LINES, ...INTRO_NOTES].map((l) => (
           <p key={l} className="max-w-md font-hand text-2xl">
             {l}
           </p>
@@ -169,6 +223,9 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
         >
           {items.map((item) => (
             <Bloom key={item.id} item={item} lit={lit.has(item.id)} />
+          ))}
+          {NOTE_SPOTS.map((spot, i) => (
+            <IntroEnvelope key={i} x={spot.x} y={spot.y} open={openNotes.has(i)} />
           ))}
         </motion.div>
       </div>
@@ -203,7 +260,19 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
           .map((item) => (
             <Bloom key={item.id} item={item} lit />
           ))}
+        {NOTE_SPOTS.map((spot, i) =>
+          openNotes.has(i) ? <IntroEnvelope key={i} x={spot.x} y={spot.y} open /> : null
+        )}
       </motion.div>
+
+      {/* the light that stayed where she walked */}
+      <motion.canvas
+        ref={canvasRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        animate={{ opacity: lifting ? 0 : 1 }}
+        transition={{ duration: 2, ease: EASE.soft }}
+      />
 
       {/* the cat, trailing after her */}
       <div ref={catRef} className="pointer-events-none absolute left-0 top-0 z-20">
@@ -223,7 +292,7 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
 
       {/* a line, every so often */}
       <AnimatePresence mode="wait">
-        {started && !lifting && progress > 0.12 && (
+        {started && !lifting && activeNote === null && progress > 0.12 && (
           <motion.p
             key={lineIndex}
             initial={{ opacity: 0, y: 12 }}
@@ -236,6 +305,9 @@ export function DarkRoom({ onComplete, onSkip }: { onComplete: () => void; onSki
           </motion.p>
         )}
       </AnimatePresence>
+
+      {/* whatever was in the envelope she just passed */}
+      <NoteOverlay index={lifting ? null : activeNote} />
 
       {/* the opening hint */}
       <AnimatePresence>

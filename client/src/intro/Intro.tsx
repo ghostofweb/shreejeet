@@ -1,25 +1,48 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { PullCord } from './PullCord';
 import { DarkRoom } from './DarkRoom';
+import { Wish } from './Wish';
 import { Finale } from './Finale';
 
-type Stage = 'room' | 'flash' | 'finale';
+type Stage = 'cord' | 'room' | 'flash' | 'wish' | 'finale';
 
 /**
- * Room → a beat of warm light → finale. The flash covers the swap so the two
- * very different scenes never cut against each other.
+ * Four beats:
+ *
+ *   cord    she pulls a light on and gets a candle
+ *   room    the candle wakes the room, and the room remembers her path
+ *   wish    a cake, and one hold to blow it out
+ *   finale  black, silence, and then her name
+ *
+ * The flash only sits between the room and the cake, where two very different
+ * scenes would otherwise cut against each other. The cake hands over already
+ * black, and the finale opens black, so that seam needs nothing.
  */
 export function Intro({ onDone }: { onDone: () => void }) {
-  const [stage, setStage] = useState<Stage>('room');
+  const [stage, setStage] = useState<Stage>('cord');
 
-  const toFinale = () => {
+  /*
+   * These are memoised on purpose. Each beat hands over on a timer keyed to its
+   * `onComplete`, so a callback that changed identity on every parent render
+   * would keep restarting that timer — the handover would either stutter or
+   * fire twice.
+   */
+  const toRoom = useCallback(() => setStage('room'), []);
+  const toFinale = useCallback(() => setStage('finale'), []);
+  const toWish = useCallback(() => {
     setStage('flash');
-    window.setTimeout(() => setStage('finale'), 900);
-  };
+    window.setTimeout(() => setStage('wish'), 900);
+  }, []);
 
   return (
     <>
-      {stage === 'room' && <DarkRoom onComplete={toFinale} onSkip={onDone} />}
+      {stage === 'cord' && <PullCord onComplete={toRoom} />}
+      {/* kept mounted through the flash so nothing shows underneath it */}
+      {(stage === 'room' || stage === 'flash') && (
+        <DarkRoom onComplete={toWish} onSkip={onDone} />
+      )}
+      {stage === 'wish' && <Wish onComplete={toFinale} />}
       {stage === 'finale' && <Finale onEnter={onDone} />}
 
       <AnimatePresence>

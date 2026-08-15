@@ -10,15 +10,20 @@ import { Tulip } from '@/components/motifs/Tulip';
 import { FINALE } from './config';
 
 /**
- * The birthday moment, choreographed rather than just faded in:
+ * The birthday moment.
  *
- *   0.0s  the dark lifts into warm light
- *   0.4s  her photos arrive one by one and settle into an arc
- *   1.4s  candles ignite along the bottom, left to right
- *   2.0s  her name is written on, left to right, in handwriting
- *   3.6s  the sentence underneath
- *   4.2s  petals begin to fall
- *   4.8s  the cat, and the way in
+ * It arrives out of the blackout at the end of the wish, so the words come
+ * first and everything else builds around them — the opposite of the usual
+ * fade-up-then-announce. Writing her name onto an empty black screen is the
+ * single strongest second in the whole intro; nothing else moves during it.
+ *
+ *   0.4s  her name is written on, left to right, in handwriting
+ *   2.4s  the dark warms up around it
+ *   3.0s  her photos arrive one by one and settle into an arc
+ *   3.4s  candles ignite along the bottom, left to right
+ *   4.4s  the sentence underneath
+ *   5.0s  petals begin to fall
+ *   5.4s  the cat, and the way in
  */
 export function Finale({ onEnter }: { onEnter: () => void }) {
   const reduced = useReducedMotion();
@@ -54,7 +59,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
           top: 46 - Math.sin(angle) * 40,
           rotate: (r1 - 0.5) * 20,
           scale: 0.82 + r1 * 0.3,
-          delay: 0.4 + i * 0.11,
+          delay: 3 + i * 0.11,
         };
       }),
     [photos]
@@ -63,14 +68,14 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
   const d = (s: number) => (reduced ? 0 : s);
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden bg-[#120d1c]">
-      {/* the dark lifting into warmth */}
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-[#0a0710]">
+      {/* the dark warming up, once the name is on */}
       <motion.div
         aria-hidden
         className="absolute inset-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 2.6, ease: EASE.soft }}
+        transition={{ duration: 3, ease: EASE.soft, delay: d(2.4) }}
         style={{
           background:
             'radial-gradient(65% 50% at 50% 42%, rgba(255,196,128,0.26), transparent 66%),' +
@@ -79,21 +84,29 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
       />
 
       {/* rising embers */}
-      {!reduced &&
-        Array.from({ length: 30 }).map((_, i) => (
-          <span
-            key={`e${i}`}
-            aria-hidden
-            className="absolute h-1 w-1 rounded-full bg-[#ffce8c]"
-            style={{
-              left: `${(i * 37) % 100}%`,
-              bottom: '-4%',
-              opacity: 0.55,
-              animation: `rise ${8 + (i % 7)}s ease-in-out ${-i * 0.6}s infinite`,
-              boxShadow: '0 0 9px rgba(255,206,140,0.9)',
-            }}
-          />
-        ))}
+      <motion.div
+        aria-hidden
+        className="absolute inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 2.4, ease: EASE.soft, delay: d(2.6) }}
+      >
+        {!reduced &&
+          Array.from({ length: 30 }).map((_, i) => (
+            <span
+              key={`e${i}`}
+              aria-hidden
+              className="absolute h-1 w-1 rounded-full bg-[#ffce8c]"
+              style={{
+                left: `${(i * 37) % 100}%`,
+                bottom: '-4%',
+                opacity: 0.55,
+                animation: `rise ${8 + (i % 7)}s ease-in-out ${-i * 0.6}s infinite`,
+                boxShadow: '0 0 9px rgba(255,206,140,0.9)',
+              }}
+            />
+          ))}
+      </motion.div>
 
       {/* falling petals, once the name is up */}
       {!reduced &&
@@ -110,7 +123,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
               borderRadius: '60% 20% 60% 20%',
               background: i % 2 ? '#e8748f' : '#f4a9c0',
               opacity: 0.75,
-              animation: `fall-slow ${11 + (i % 6)}s linear ${d(4.2) + i * 0.4}s infinite`,
+              animation: `fall-slow ${11 + (i % 6)}s linear ${d(5) + i * 0.4}s infinite`,
             }}
           />
         ))}
@@ -133,7 +146,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
       {/* candles along the bottom, lighting one after another */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-center gap-5 sm:gap-9">
         {Array.from({ length: 9 }).map((_, i) => (
-          <Candle key={i} delay={d(1.4 + i * 0.16)} reduced={!!reduced} />
+          <Candle key={i} delay={d(3.4 + i * 0.16)} reduced={!!reduced} />
         ))}
       </div>
 
@@ -142,7 +155,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.7, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 1.6, ease: EASE.soft, delay: d(0.9) }}
+          transition={{ duration: 1.6, ease: EASE.soft, delay: d(3) }}
         >
           <Tulip size={104} bloom petal="#e8748f" petalDark="#bf4f6c" stem="#6f9a63" />
         </motion.div>
@@ -152,8 +165,8 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
           initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0 }}
           animate={{ clipPath: 'inset(0 -6% 0 0)', opacity: 1 }}
           transition={{
-            clipPath: { duration: reduced ? 0 : 2.6, ease: [0.33, 0.9, 0.4, 1], delay: d(2) },
-            opacity: { duration: 0.4, delay: d(2) },
+            clipPath: { duration: reduced ? 0 : 2.6, ease: [0.33, 0.9, 0.4, 1], delay: d(0.4) },
+            opacity: { duration: 0.4, delay: d(0.4) },
           }}
           className="mt-4 max-w-4xl font-hand text-[clamp(2.8rem,11vw,6.5rem)] leading-[1.08] text-[#fff3e2]"
           style={{ textShadow: '0 0 42px rgba(255,190,120,0.45)' }}
@@ -164,7 +177,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.4, ease: EASE.soft, delay: d(3.6) }}
+          transition={{ duration: 1.4, ease: EASE.soft, delay: d(4.4) }}
           className="mt-6 max-w-lg text-balance text-[1.05rem] leading-relaxed text-[#f6dfc6]/80"
         >
           {FINALE.subtitle}
@@ -173,7 +186,7 @@ export function Finale({ onEnter }: { onEnter: () => void }) {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: EASE.soft, delay: d(4.8) }}
+          transition={{ duration: 1.2, ease: EASE.soft, delay: d(5.4) }}
           className="mt-9 flex flex-col items-center gap-5"
         >
           <Cat pose="hold-heart" mood="happy" size={96} />

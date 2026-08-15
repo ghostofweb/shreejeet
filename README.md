@@ -14,6 +14,25 @@ All six sections are built:
 | **Confessions** | A dark room with a light that follows you. The words are on the note but out of focus until you tap — or hold — to read. |
 | **Important Dates** | Days-together counter, a live countdown to whatever is next, and every date on a slow orbit or in a list. |
 
+## The intro
+
+Armed from the admin dashboard, plays once per person, and never fires unless
+you switch it on. Four beats, about ninety seconds:
+
+1. **The cord** — the site opens pitch black with one cord hanging. She pulls
+   it and gets a candle. Any drag anywhere works; two taps also work.
+2. **The room** — a dark room that wakes wherever the candle goes. Nothing is
+   hidden and nothing can be missed. Three envelopes are lying about with a
+   line each, and the light leaves a trail, so by the end the room holds the
+   path she walked.
+3. **The wish** — a cake rises with its candles lit. Press and hold; the dark
+   closes in, the flames gutter, and they go out one after another.
+4. **The finale** — a beat of complete black, then her name written on in
+   handwriting, then the warmth, the photos and the way in.
+
+**All the words live in one file: `client/src/intro/config.ts`.** Nothing else
+needs touching.
+
 ## Running it
 
 ```bash
