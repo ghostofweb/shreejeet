@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Loading } from '@/components/ui/States';
 import { ResourcePage } from '@/components/admin/resource';
@@ -53,6 +53,7 @@ export default function App() {
   const restore = useAuth((s) => s.restore);
   const { shouldPlay, finish } = useIntroGate();
   const [introDismissed, setIntroDismissed] = useState(false);
+  const navigate = useNavigate();
   useDocumentTitle();
 
   useEffect(() => {
@@ -78,6 +79,13 @@ export default function App() {
         onDone={() => {
           finish();
           setIntroDismissed(true);
+          /*
+           * The intro plays over whatever URL she happened to be on, and that
+           * is usually /admin — it is where the toggle and "play it again"
+           * live. "Come in" has to open the front door, not the control room.
+           */
+          navigate('/story', { replace: true });
+          window.scrollTo({ top: 0, behavior: 'auto' });
         }}
       />
     );

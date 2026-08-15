@@ -22,6 +22,8 @@ export function useSpineGeometry(
   const [nodeTs, setNodeTs] = useState<number[]>([]);
   /** Each memory's top in document space, so the scroll handler reads no layout. */
   const [tops, setTops] = useState<number[]>([]);
+  /** The track's own top in document space. */
+  const [trackTop, setTrackTop] = useState(0);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -42,6 +44,7 @@ export function useSpineGeometry(
       );
 
       const docTop = track.getBoundingClientRect().top + window.scrollY;
+      setTrackTop((prev) => (Math.abs(prev - docTop) < 0.5 ? prev : docTop));
       const els = eventRefs.current ?? [];
       const ts: number[] = [];
       const nextTops: number[] = [];
@@ -78,5 +81,5 @@ export function useSpineGeometry(
     };
   }, [trackRef, eventRefs, count]);
 
-  return { geo, nodeTs, tops };
+  return { geo, nodeTs, tops, trackTop };
 }

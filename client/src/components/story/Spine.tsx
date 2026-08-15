@@ -1,5 +1,12 @@
 import { useEffect } from 'react';
-import { motion, useMotionValue, useTransform, type MotionValue } from 'framer-motion';
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from 'framer-motion';
 import { EASE } from '@/lib/motion';
 import { sceneFor } from '@/lib/scenes';
 import { spineSlope, spineX, type SpineGeo } from '@/lib/spine';
@@ -9,6 +16,16 @@ import { Icon } from '@/components/Icon';
 import { HelixSpine } from '@/components/motifs/HelixSpine';
 
 const CAT = 46;
+
+/**
+ * Where down the screen the cat walks. Tying it to scroll *progress* instead
+ * meant it drifted from near the bottom of the viewport at the first memory to
+ * near the top at the last, so for most of the page it was somewhere you were
+ * not looking. Pinned to a line a little above centre, it is always in shot —
+ * and the helix now lights up to exactly where it has walked, so it reads as
+ * the tip of the trail rather than a marker that happens to be nearby.
+ */
+const READ_LINE = 0.42;
 
 /**
  * Everything that lives on the spine, in one layer: the helix itself, the
@@ -23,41 +40,58 @@ export function Spine({
   geo,
   nodeTs,
   events,
-  progress,
+  trackTop,
   accent,
 }: {
   geo: SpineGeo;
   /** Each memory's position down the track, 0→1. */
   nodeTs: number[];
   events: StoryEvent[];
-  /** Springy scroll progress, 0→1 across the track. */
-  progress: MotionValue<number>;
+  /** The track's top in document space, for turning scroll into depth. */
+  trackTop: number;
   /** The current scene's accent — the helix takes on the colour of the sky. */
   accent: string;
 }) {
-  const reveal = useTransform(progress, (t) => `inset(0 0 ${((1 - t) * 100).toFixed(2)}% 0)`);
+  const reduced = useReducedMotion();
+  const { scrollY } = useScroll();
 
-  /*
-   * The cat's position is derived from `progress`, but `progress` doesn't move
-   * when the *track* changes size — so on a resize (or when a late image pushes
-   * the page taller) these are nudged by hand, or the cat would sit on where
-   * the spine used to be.
-   */
+  /** How far down the track the reading line currently sits, 0→1. */
+  const depth = useMotionValue(0);
+  useEffect(() => {
+    if (!geo.h) return;
+    const update = (y: number) => {
+      const line = y + window.innerHeight * READ_LINE - trackTop;
+      depth.set(Math.max(0, Math.min(1, line / geo.h)));
+    };
+    update(scrollY.get());
+    return scrollY.on('change', update);
+  }, [geo, trackTop, scrollY, depth]);
+
+  // A light spring so it has weight without trailing the page; near-instant
+  // when she has asked for less movement.
+  const t = useSpring(
+    depth,
+    reduced
+      ? { stiffness: 1200, damping: 90, mass: 0.1 }
+      : { stiffness: 190, damping: 32, mass: 0.3 }
+  );
+  const reveal = useTransform(t, (v) => `inset(0 0 ${((1 - v) * 100).toFixed(2)}% 0)`);
+
   const catX = useMotionValue(0);
   const catY = useMotionValue(0);
   const catTilt = useMotionValue(0);
 
   useEffect(() => {
-    const place = (t: number) => {
-      catX.set(spineX(t, geo) - CAT / 2);
-      catY.set(t * geo.h - CAT / 2);
+    const place = (v: number) => {
+      catX.set(spineX(v, geo) - CAT / 2);
+      catY.set(v * geo.h - CAT / 2);
       // Lean into the bend, but never so far it reads as falling over.
-      const lean = Math.atan(spineSlope(t, geo)) * (180 / Math.PI);
+      const lean = Math.atan(spineSlope(v, geo)) * (180 / Math.PI);
       catTilt.set(Math.max(-16, Math.min(16, lean * 2.4)));
     };
-    place(progress.get());
-    return progress.on('change', place);
-  }, [geo, progress, catX, catY, catTilt]);
+    place(t.get());
+    return t.on('change', place);
+  }, [geo, t, catX, catY, catTilt]);
 
   return (
     <>

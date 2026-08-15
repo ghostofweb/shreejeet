@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { api, errorMessage } from '@/lib/api';
 import { DUR, EASE } from '@/lib/motion';
 import { sceneFor } from '@/lib/scenes';
@@ -39,23 +39,10 @@ export default function Story() {
 
   const events = useMemo(() => data?.items ?? [], [data]);
 
-  // Scroll progress across the timeline track only (not the hero or the outro),
-  // so the helix fills exactly as the memories go by.
-  const { scrollYProgress } = useScroll({
-    target: trackRef,
-    offset: ['start 0.85', 'end 0.35'],
-    // The track only exists after the query resolves; don't measure on layout.
-    layoutEffect: false,
-  });
-  /*
-   * A spring so the fill has weight rather than snapping — but a stiffer, less
-   * massive one than before. The old settings trailed the scroll far enough
-   * that on a high-refresh screen the helix read as lagging behind the page
-   * instead of riding it.
-   */
-  const progress = useSpring(scrollYProgress, { stiffness: 130, damping: 30, mass: 0.35 });
-
-  const { geo, nodeTs, tops } = useSpineGeometry(trackRef, eventRefs, events.length);
+  // The spine owns its own scroll maths now: both the helix fill and the cat
+  // read from a reading line pinned in the viewport, so they stay together and
+  // the cat is always on screen.
+  const { geo, nodeTs, tops, trackTop } = useSpineGeometry(trackRef, eventRefs, events.length);
 
   const activeScene = sceneFor(scene);
 
@@ -138,7 +125,7 @@ export default function Story() {
             geo={geo}
             nodeTs={nodeTs}
             events={events}
-            progress={progress}
+            trackTop={trackTop}
             accent={activeScene.accent}
           />
 
