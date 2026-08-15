@@ -10,10 +10,11 @@ import { daysBetween, formatDate } from '@/lib/utils';
 import { Cat } from '@/components/Cat';
 import { Icon } from '@/components/Icon';
 import { Tulip } from '@/components/motifs/Tulip';
-import { HelixSpine } from '@/components/motifs/HelixSpine';
 import { SceneBackground } from '@/components/story/SceneBackground';
+import { Spine } from '@/components/story/Spine';
 import { StoryNav } from '@/components/story/StoryNav';
 import { TimelineEvent } from '@/components/story/TimelineEvent';
+import { useSpineGeometry } from '@/components/story/useSpineGeometry';
 import { Empty, ErrorState, Loading } from '@/components/ui/States';
 
 export default function Story() {
@@ -46,9 +47,15 @@ export default function Story() {
     // The track only exists after the query resolves; don't measure on layout.
     layoutEffect: false,
   });
-  // A spring makes the fill feel like it has weight instead of snapping.
-  const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.5 });
-  const catY = useTransform(progress, [0, 1], ['0%', '100%']);
+  /*
+   * A spring so the fill has weight rather than snapping — but a stiffer, less
+   * massive one than before. The old settings trailed the scroll far enough
+   * that on a high-refresh screen the helix read as lagging behind the page
+   * instead of riding it.
+   */
+  const progress = useSpring(scrollYProgress, { stiffness: 130, damping: 30, mass: 0.35 });
+
+  const { geo, nodeTs, tops } = useSpineGeometry(trackRef, eventRefs, events.length);
 
   const activeScene = sceneFor(scene);
 
@@ -57,19 +64,22 @@ export default function Story() {
    * top has passed a reading line a third down the screen. A per-event
    * IntersectionObserver band was unreliable: land in the gap between two
    * memories and nothing was active, so the arrows went stale.
+   *
+   * It compares against positions measured once by the spine's observer rather
+   * than calling getBoundingClientRect per memory per frame. On a 165Hz screen
+   * that was thousands of layout reads a second for two pieces of state that
+   * change a handful of times per page.
    */
   useEffect(() => {
-    if (!events.length) return;
+    if (!events.length || !tops.length) return;
     let frame = 0;
 
     const measure = () => {
       frame = 0;
-      const line = window.innerHeight * 0.34;
+      const line = window.scrollY + window.innerHeight * 0.34;
       let next = 0;
-      for (let i = 0; i < eventRefs.current.length; i++) {
-        const el = eventRefs.current[i];
-        if (!el) continue;
-        if (el.getBoundingClientRect().top <= line) next = i;
+      for (let i = 0; i < tops.length; i++) {
+        if (tops[i] <= line) next = i;
         else break;
       }
       setActiveIndex((prev) => (prev === next ? prev : next));
@@ -91,7 +101,7 @@ export default function Story() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, [events]);
+  }, [events, tops]);
 
   if (isLoading) return <Loading message="finding where it all started…" />;
   if (isError) {
@@ -124,26 +134,15 @@ export default function Story() {
         </div>
       ) : (
         <div ref={trackRef} className="relative mx-auto max-w-6xl px-5 pb-40 sm:px-8">
-          {/* the helix, running the full height of the track */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-[0.35rem] w-9 sm:left-1/2 sm:-translate-x-1/2"
-          >
-            <HelixSpine progress={progress} accent={activeScene.accent} turns={events.length * 3} />
-          </div>
+          <Spine
+            geo={geo}
+            nodeTs={nodeTs}
+            events={events}
+            progress={progress}
+            accent={activeScene.accent}
+          />
 
-          {/* the cat walks down the spine as she scrolls */}
-          <motion.div
-            aria-hidden
-            style={{ top: catY }}
-            // centred on the spine at both breakpoints: the mobile spine sits at
-            // 0.35rem with a 2.25rem width, so its centre is ~23px in.
-            className="pointer-events-none absolute left-0 z-[5] -translate-y-1/2 sm:left-1/2 sm:-ml-[23px]"
-          >
-            <Cat pose="walk" mood="curious" size={46} />
-          </motion.div>
-
-          <div className="flex flex-col gap-32 pt-10 sm:gap-48">
+          <div className="relative z-[8] flex flex-col gap-32 pt-10 sm:gap-48">
             {events.map((event, i) => (
               <TimelineEvent
                 key={event.id}

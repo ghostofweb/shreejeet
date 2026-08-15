@@ -51,7 +51,10 @@ export function Nav() {
           className={cn(
             'flex items-center gap-1 rounded-full px-2 py-1.5',
             'border border-[color-mix(in_srgb,var(--fg)_14%,transparent)]',
-            'bg-[color-mix(in_srgb,var(--bg)_78%,transparent)] backdrop-blur-xl lift'
+            // blur-md, not blur-xl: a fixed bar re-blurs whatever scrolls under
+            // it on every frame, and the cost scales with the radius. At 12px
+            // it looks the same and costs about a third as much.
+            'bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-md lift'
           )}
         >
           {SECTIONS.map((s) => (
@@ -104,7 +107,7 @@ export function Nav() {
         className={cn(
           'fixed right-4 top-4 z-[60] flex h-12 w-12 items-center justify-center rounded-full md:hidden',
           'border border-[color-mix(in_srgb,var(--fg)_16%,transparent)]',
-          'bg-[color-mix(in_srgb,var(--bg)_85%,transparent)] backdrop-blur-xl'
+          'bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] backdrop-blur-md'
         )}
       >
         <span className="relative block h-4 w-5">

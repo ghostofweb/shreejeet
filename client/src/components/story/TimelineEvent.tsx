@@ -32,21 +32,21 @@ export function TimelineEvent({
       ref={registerRef}
       className={cn(
         'relative flex w-full',
-        // mobile: everything sits to the right of the spine
-        'pl-16 sm:pl-0',
-        // desktop: leave a gutter either side of the spine so the cat riding
-        // down it never lands on top of the text
+        // mobile: everything sits to the right of the spine's lane
+        'pl-[4.5rem] sm:pl-0',
+        // desktop: the gutter has to clear the spine's full wander (up to 110px
+        // either side of centre) plus the node sitting on it
         side === 'left'
-          ? 'sm:justify-start sm:pr-[calc(50%+3.75rem)]'
-          : 'sm:justify-end sm:pl-[calc(50%+3.75rem)]'
+          ? 'sm:justify-start sm:pr-[calc(50%+7.5rem)]'
+          : 'sm:justify-end sm:pl-[calc(50%+7.5rem)]'
       )}
     >
-      {/* the node on the spine */}
-      <SpineNode accent={scene.accent} />
-
       <motion.article
-        initial={{ opacity: 0, y: 52, filter: 'blur(10px)' }}
-        whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+        // Transform and opacity only. This used to animate `filter: blur()` on
+        // every memory, images and all — the most expensive way there is to
+        // fade something in, and the reason the reveals hitched.
+        initial={{ opacity: 0, y: 52 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-90px' }}
         transition={{ duration: DUR.slow, ease: EASE.soft }}
         className={cn('w-full max-w-[36rem]', side === 'left' && 'sm:text-right')}
@@ -116,32 +116,6 @@ export function TimelineEvent({
         </p>
       </motion.article>
     </div>
-  );
-}
-
-/** A benzene ring sitting on the helix marks each memory. */
-function SpineNode({ accent }: { accent: string }) {
-  return (
-    <motion.div
-      initial={{ scale: 0, rotate: -60 }}
-      whileInView={{ scale: 1, rotate: 0 }}
-      viewport={{ once: true, margin: '-90px' }}
-      transition={{ duration: 0.7, ease: EASE.bounce }}
-      className={cn(
-        'absolute top-1 z-10 flex h-11 w-11 items-center justify-center rounded-full',
-        'left-[-0.35rem] sm:left-1/2 sm:-translate-x-1/2'
-      )}
-      style={{
-        background: 'rgba(10,6,14,0.62)',
-        border: `1px solid ${accent}66`,
-        boxShadow: `0 0 26px -4px ${accent}, inset 0 0 12px -6px ${accent}`,
-        backdropFilter: 'blur(6px)',
-      }}
-    >
-      <span style={{ color: accent }}>
-        <Icon name="benzene" size={22} strokeWidth={1.7} />
-      </span>
-    </motion.div>
   );
 }
 
