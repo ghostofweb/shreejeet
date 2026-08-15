@@ -68,6 +68,21 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* No scrollbar down the side of the page. Scrolling still works exactly as
+     it did — the bar is only hidden, not disabled — and panels that scroll
+     inside the page keep theirs (see below), because in a modal or a media
+     grid the bar is the only thing telling you there is more. */
+  html,
+  body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
   body {
     margin: 0;
     min-height: 100dvh;
