@@ -217,6 +217,16 @@ function MediaLibraryModal({
     onError: (err) => setError(errorMessage(err, 'That upload did not work')),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/media/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['media'] });
+    },
+    onError: (err) => setError(errorMessage(err, 'Could not delete media')),
+  });
+
   function handleFiles(list: FileList | null) {
     if (!list?.length) return;
     uploadMutation.mutate(Array.from(list));
@@ -333,6 +343,21 @@ function MediaLibraryModal({
                     <Icon name="check" size={11} strokeWidth={2.5} />
                   </span>
                 )}
+
+                <button
+                  type="button"
+                  aria-label="Delete media"
+                  disabled={deleteMutation.isPending}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm('Are you sure you want to delete this file?')) {
+                      deleteMutation.mutate(m.id);
+                    }
+                  }}
+                  className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/75 text-white opacity-0 transition-opacity hover:bg-[#c9566b] hover:text-white group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-50"
+                >
+                  <Icon name="trash" size={11} />
+                </button>
 
                 <span className="pointer-events-none absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/80 to-transparent px-1.5 pb-5 pt-4 text-[0.6rem] text-white/70">
                   {m.type === 'video' && m.duration

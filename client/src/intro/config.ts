@@ -25,9 +25,9 @@ export const INTRO_COPY = {
  * room wakes up. Keep them short — they sit over the top of everything.
  */
 export const INTRO_LINES: string[] = [
-  'Placeholder — you found the light.',
-  'Placeholder — keep going.',
-  'Placeholder — nearly there.',
+  'you found the light.',
+  'keep going.',
+  'nearly there.',
 ];
 
 /**
@@ -37,9 +37,9 @@ export const INTRO_LINES: string[] = [
  * one feels like a secret. Put the lines you actually mean here.
  */
 export const INTRO_NOTES: string[] = [
-  'Placeholder — the first thing you would want her to read.',
-  'Placeholder — the second one.',
-  'Placeholder — the third, and the best of the three.',
+  'Your the best thing ever happened to me love',
+  'I cant wait for our future and what it holds for us.',
+  'I love you so much',
 ];
 
 /** Beat 3 — the cake. */
@@ -57,7 +57,7 @@ export const FINALE = {
   /** Written on, left to right, in handwriting, out of the dark. The moment. */
   title: 'Happy birthday, Shree',
   /** Underneath, smaller. */
-  subtitle: 'Placeholder — one sentence. The one you actually mean.',
+  subtitle: 'This is for you my love',
   /** The button into the site. */
   cta: 'come in',
   /**
