@@ -30,7 +30,7 @@ export const env = {
   accessSecret: () => required('JWT_ACCESS_SECRET'),
   refreshSecret: () => required('JWT_REFRESH_SECRET'),
 
-  clientOrigin: optional('CLIENT_ORIGIN', 'http://localhost:5173'),
+  clientOrigin: optional('CLIENT_ORIGIN', 'https://shreejeet.vercel.app, http://localhost:5173'),
 
   mediaProvider: optional('MEDIA_PROVIDER', 'local') as 'local' | 'cloudinary',
   cloudinary: {
